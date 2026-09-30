@@ -8,5 +8,17 @@
       "database_name": "typefight-db",
       "database_id": "9ad53467-153b-4903-a3aa-82121d0d7517"
     }
-  ]
+  ],
+  "env": {
+    "staging": {
+      "name": "typefight-api-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "typefight-staging",
+          "database_id": "db80b657-e14b-4d81-a164-66ac025323c3"
+        }
+      ]
+    }
+  }
 }
