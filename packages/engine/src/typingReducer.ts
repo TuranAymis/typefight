@@ -20,7 +20,7 @@ export const isValidKey = (key: string): boolean => {
 export const createTypingState = (targetText: string): TypingState => {
   if (!TARGET_TEXT_REGEX.test(targetText)) {
     throw new Error(
-      `Invalid target text: "${targetText}". Target text must contain lowercase 'a'-'z' and space only.`
+      `Invalid target text: "${targetText}". Target text must contain lowercase 'a'-'z' and space only.`,
     );
   }
 
@@ -41,10 +41,7 @@ export const createTypingState = (targetText: string): TypingState => {
  * Deterministic: Does not read system clock or generate entropy.
  * All timestamps are explicitly passed in via KeyInput.
  */
-export const typingReducer = (
-  state: TypingState,
-  input: KeyInput
-): TypingState => {
+export const typingReducer = (state: TypingState, input: KeyInput): TypingState => {
   // Input after completion is a no-op
   if (state.isComplete) {
     return state;

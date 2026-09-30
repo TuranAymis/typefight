@@ -46,6 +46,7 @@ packages/
 ### The Engine Purity & Determinism Rule
 
 All logic under `packages/engine/` is completely deterministic:
+
 - Timestamps and entropy must be injected as parameters.
 - Build and lint rules (`eslint.config.js`) actively fail if `packages/engine/` imports React packages or references `window`, `document`, `localStorage`, `performance`, `Date.now()`, `new Date()`, or `Math.random()`.
 - Ensures zero-DOM headless execution, deterministic replays, and future multiplayer server-side tick validation.
@@ -59,7 +60,7 @@ All logic under `packages/engine/` is completely deterministic:
 - **State Management:** [Zustand](https://zustand-demo.pmnd.rs/)
 - **Styling:** Plain CSS Modules (No Tailwind, no external UI frameworks)
 - **Testing:** [Vitest](https://vitest.dev/) (Node environment, zero-DOM for engine tests)
-- **Linting & Formatting:** ESLint 9 (Strict typing, `any` banned, engine purity boundaries)
+- **Linting & Formatting:** ESLint 9 (strict typing, `any` banned, engine purity boundaries) and Prettier
 - **Persistence:** D1 (server) and IndexedDB (client, planned)
 
 ---
@@ -67,29 +68,37 @@ All logic under `packages/engine/` is completely deterministic:
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js (v20+ recommended)
 - npm (v10+)
 
 ### Installation
+
 ```bash
 npm install
 ```
 
 ### Development Server
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Scripts
-| Command | Description |
-|---|---|
-| `npm run dev` | Starts the web dev server (`apps/web`) |
-| `npm run build` | Typechecks and builds production static bundle to `dist/` |
-| `npm test` | Runs pure engine unit tests with Vitest |
-| `npm run test:watch` | Runs Vitest in watch mode |
-| `npm run typecheck` | Validates strict TypeScript compilation (`tsc --noEmit`) |
-| `npm run lint` | Runs ESLint with engine boundary & strict rules |
+
+| Command                | Description                                               |
+| ---------------------- | --------------------------------------------------------- |
+| `npm run dev`          | Starts the web dev server (`apps/web`)                    |
+| `npm run build`        | Typechecks and builds production static bundle to `dist/` |
+| `npm test`             | Runs pure engine unit tests with Vitest                   |
+| `npm run test:watch`   | Runs Vitest in watch mode                                 |
+| `npm run typecheck`    | Validates strict TypeScript compilation (`tsc --noEmit`)  |
+| `npm run lint`         | Runs ESLint with engine boundary & strict rules           |
+| `npm run format`       | Formats the repository with Prettier                      |
+| `npm run format:check` | Checks repository formatting with Prettier                |
+| `npm run check`        | Runs format check, lint, and typecheck in sequence        |
 
 ---
 

@@ -47,12 +47,14 @@ packages/
 This boundary is enforced at build and lint time via strict ESLint rules (`no-restricted-imports`, `no-restricted-globals`).
 
 **Why this boundary exists:**
+
 1. **Deterministic Simulation & Replays:** The typing rules (blocking input, sequential indices, word drops) must run headlessly and deterministically.
 2. **Future Networking:** In future PvP phases (Phase 3), the same core logic models will run client/server headlessly to validate tick streams and inputs without browser overhead.
 3. **Decoupled Architecture & Testing:** Game state transitions can be fully unit-tested with fast, zero-DOM runner tests.
 4. **Performance:** Prevents React re-render cycles or UI reflows from leaking into high-frequency typing calculations.
 
 ---
+
 ### Determinism Rule (extension of the purity rule)
 
 `packages/engine/` MUST NOT read the clock or generate randomness itself.
@@ -116,6 +118,7 @@ boss passages, and every test fixture. Narrative text that is READ but
 never TYPED is exempt and uses normal orthography.
 
 ### 8.1 Key Repeat Rule
+
 Key repeat events (`event.repeat === true`) are discarded at the input
 bridge and never reach the reducer. Rationale: holding a key would
 auto-advance repeated letters, would turn one held mistake into many
