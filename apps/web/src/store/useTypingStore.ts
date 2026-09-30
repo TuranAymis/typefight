@@ -4,7 +4,7 @@ import {
   typingReducer,
   type KeyInput,
   type TypingState,
-} from '../engine';
+} from '@typefight/engine';
 
 export const DEFAULT_PRACTICE_TEXT = 'the quick brown fox jumps over the lazy dog';
 

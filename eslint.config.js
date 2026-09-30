@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'project_documents', 'docs'] },
+  { ignores: ['**/dist', '**/node_modules', 'project_documents', 'docs'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -33,7 +33,7 @@ export default tseslint.config(
   // Must NOT import React, touch document/window/storage/performance,
   // or read ambient time (Date.now, new Date(), performance.now) or entropy (Math.random)
   {
-    files: ['src/engine/**/*.{ts,tsx,js,jsx}'],
+    files: ['packages/engine/src/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'no-restricted-imports': [
         'error',

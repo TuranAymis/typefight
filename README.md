@@ -31,34 +31,36 @@ TypeFight.io is a competitive, browser-based typing game that treats keyboard in
 
 ## 🏗️ Architecture & Boundaries
 
-The codebase strictly enforces structural boundaries between pure game logic and the UI layer:
+TypeFight is an npm-workspaces monorepo. Responsibilities are strictly separated:
 
 ```
-src/
-  engine/     Pure, deterministic game logic. Zero React or DOM dependencies.
-              No window, document, localStorage, performance, or ambient time (Date.now, Math.random).
-  ui/         React components, screens, layout, and plain CSS Modules.
-  store/      Zustand stores bridging UI and engine.
-  content/    JSON game data (word pools, tier configs) and TypeScript types.
+apps/
+  web/            React + Vite + TypeScript client (ui/, store/ with Zustand, CSS Modules).
+  api/            Cloudflare Worker + Hono API (D1 database). Server-side score validation.
+packages/
+  engine/         Pure, deterministic game logic. Zero React or DOM dependencies.
+                  No window, document, localStorage, performance, or ambient time (Date.now, Math.random).
+  texts/          Word pools, tier configs and content types (data only, no logic).
 ```
 
 ### The Engine Purity & Determinism Rule
 
-All logic under `src/engine/` is completely deterministic:
+All logic under `packages/engine/` is completely deterministic:
 - Timestamps and entropy must be injected as parameters.
-- Build and lint rules (`eslint.config.js`) actively fail if `src/engine/` imports React packages or references `window`, `document`, `localStorage`, `performance`, `Date.now()`, `new Date()`, or `Math.random()`.
+- Build and lint rules (`eslint.config.js`) actively fail if `packages/engine/` imports React packages or references `window`, `document`, `localStorage`, `performance`, `Date.now()`, `new Date()`, or `Math.random()`.
 - Ensures zero-DOM headless execution, deterministic replays, and future multiplayer server-side tick validation.
 
 ---
 
 ## 🛠️ Technology Stack
 
+- **Backend:** [Cloudflare Workers](https://workers.cloudflare.com/) + [Hono](https://hono.dev/) + Cloudflare D1
 - **Frontend & Bundler:** [Vite](https://vitejs.dev/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
 - **State Management:** [Zustand](https://zustand-demo.pmnd.rs/)
 - **Styling:** Plain CSS Modules (No Tailwind, no external UI frameworks)
 - **Testing:** [Vitest](https://vitest.dev/) (Node environment, zero-DOM for engine tests)
 - **Linting & Formatting:** ESLint 9 (Strict typing, `any` banned, engine purity boundaries)
-- **Persistence:** Local-first (IndexedDB planned for Phase 1; no backend/database in MVP)
+- **Persistence:** D1 (server) and IndexedDB (client, planned)
 
 ---
 
@@ -82,7 +84,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ### Scripts
 | Command | Description |
 |---|---|
-| `npm run dev` | Starts Vite local development server |
+| `npm run dev` | Starts the web dev server (`apps/web`) |
 | `npm run build` | Typechecks and builds production static bundle to `dist/` |
 | `npm test` | Runs pure engine unit tests with Vitest |
 | `npm run test:watch` | Runs Vitest in watch mode |
