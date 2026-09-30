@@ -84,6 +84,19 @@ export default tseslint.config(
           name: 'performance',
           message: 'Engine must be pure game logic and cannot reference performance.',
         },
+        ...[
+          'fetch',
+          'XMLHttpRequest',
+          'WebSocket',
+          'setTimeout',
+          'setInterval',
+          'requestAnimationFrame',
+          'navigator',
+          'location',
+          'structuredClone',
+          'HTMLElement',
+          'Node',
+        ].map((name) => ({ name, message: 'Engine cannot access ambient browser APIs.' })),
       ],
       'no-restricted-properties': [
         'error',
@@ -110,6 +123,22 @@ export default tseslint.config(
         {
           selector: "NewExpression[callee.name='Date']",
           message: 'Engine must not instantiate Date. Timestamps must be passed in as parameters.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@typefight/engine/*'],
+              message: 'Import only from the public @typefight/engine entry point.',
+            },
+          ],
         },
       ],
     },
