@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { isValidKey, type KeyInput } from '../../engine';
+import { isValidKey, type KeyInput } from '@typefight/engine';
 import { useTypingStore } from '../../store';
 
 /**

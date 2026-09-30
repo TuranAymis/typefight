@@ -14,31 +14,36 @@
 
 The following stack is strictly fixed. Do not replace, upgrade, or add alternative frameworks:
 
-- **Frontend & Bundler:** Vite + React + TypeScript (strict mode enabled).
+- **Repo layout:** npm-workspaces monorepo (`apps/web`, `apps/api`, `packages/engine`, `packages/texts`).
+- **Frontend & Bundler:** Vite + React + TypeScript (strict mode enabled), in `apps/web`.
 - **State Management:** Zustand.
 - **Styling:** Plain CSS Modules only.
-- **Architecture:** Client-side only (SPA).
-  - **No backend, no database, no server calls.**
+- **Backend:** Cloudflare Worker + Hono in `apps/api`, Cloudflare D1 for storage. Web deploys to Cloudflare Pages.
+- **Testing:** Vitest (unit) + Playwright (E2E). Lint/format: ESLint + Prettier.
   - **No Phaser, no 2D/3D game engine libraries.**
   - **No UI component libraries (no MUI, Shadcn, Chakra, etc.), no Tailwind CSS.**
-  - **No localStorage.** Persistence will be implemented using IndexedDB in a later phase; do not add it yet.
+  - **No localStorage/sessionStorage.** Client persistence will use IndexedDB in a later phase.
+
+> Source of truth for scope and stack is the Trello board (Project Lab, `TypeFight` cards). Where `docs/spec.md` disagrees on backend/monorepo, the Trello cards win.
 
 ---
 
 ## 3. Directory Structure & Boundaries
 
 ```
-src/
-  engine/    Pure game logic. MUST NOT import react, react-dom, or touch document/window.
-             Plain functions, state reducers/models, and types only.
+apps/web/src/
   ui/        React components, screens, layout, and CSS modules.
   store/     Zustand stores bridging UI and engine.
-  content/   JSON content (word lists, tiers, narrative passages) and their type definitions.
+apps/api/    Cloudflare Worker + Hono API and D1 migrations.
+packages/
+  engine/    Pure game logic. MUST NOT import react, react-dom, or touch document/window.
+             Plain functions, state reducers/models, and types only.
+  texts/     JSON content (word lists, tiers, narrative passages) and their type definitions.
 ```
 
 ### The `engine/` Purity Rule & Why It Exists
 
-**Rule:** Nothing under `src/engine/` may import `react`, `react-dom`, or reference global browser objects (`window`, `document`, `localStorage`, `sessionStorage`, etc.).
+**Rule:** Nothing under `packages/engine/` may import `react`, `react-dom`, or reference global browser objects (`window`, `document`, `localStorage`, `sessionStorage`, etc.).
 This boundary is enforced at build and lint time via strict ESLint rules (`no-restricted-imports`, `no-restricted-globals`).
 
 **Why this boundary exists:**
@@ -50,7 +55,7 @@ This boundary is enforced at build and lint time via strict ESLint rules (`no-re
 ---
 ### Determinism Rule (extension of the purity rule)
 
-`src/engine/` MUST NOT read the clock or generate randomness itself.
+`packages/engine/` MUST NOT read the clock or generate randomness itself.
 
 - **FORBIDDEN inside engine/:** `Date.now()`, `new Date()`,
   `performance.now()`, `Math.random()`, and any other ambient source
@@ -59,7 +64,7 @@ This boundary is enforced at build and lint time via strict ESLint rules (`no-re
   from an injected seeded RNG. The caller owns the clock and the seed.
 
 Add `performance` to `no-restricted-globals` and add lint rules banning
-`Date.now`, `new Date`, and `Math.random` under `src/engine/**`.
+`Date.now`, `new Date`, and `Math.random` under `packages/engine/**`.
 
 **Why:** The engine's value is that the same inputs always produce the
 same outputs. Deterministic replay tests, difficulty simulation, and
@@ -80,18 +85,18 @@ noticed for months.
 
 ## 5. Explicit "DO NOT DO" List
 
-- **DO NOT** add a backend, database, Express server, or network calls.
+- **DO NOT** add another backend framework or database; the backend is Worker + Hono + D1 only.
 - **DO NOT** install or use Phaser or any game engine library.
 - **DO NOT** use UI libraries (MUI, Radix, Lucide, Tailwind, etc.). Use plain CSS modules.
-- **DO NOT** use `localStorage` or `sessionStorage`. Persistence will be IndexedDB later.
+- **DO NOT** use `localStorage` or `sessionStorage`. Client persistence will be IndexedDB later.
 - **DO NOT** use TypeScript `any`. The codebase enforces strict type safety (`strict: true`, `noUncheckedIndexedAccess: true`, `@typescript-eslint/no-explicit-any: "error"`).
-- **DO NOT** place game logic, typing engines, or word spawning outside `src/engine/`.
-- **DO NOT** import React or access DOM/browser globals (`window`, `document`) inside `src/engine/`.
+- **DO NOT** place game logic, typing engines, or word spawning outside `packages/engine/`.
+- **DO NOT** import React or access DOM/browser globals (`window`, `document`) inside `packages/engine/`.
 
 ## 6. Testing
 
 - **Vitest.** No DOM environment for engine tests.
-- Every pure function in `src/engine/` ships with unit tests in the
+- Every pure function in `packages/engine/` ships with unit tests in the
   same task. Untested engine code is not done.
 - Tests call engine functions directly. No React Testing Library
   for engine logic.
@@ -99,7 +104,7 @@ noticed for months.
 ## 7. Content Is Data
 
 Tier parameters, word pools, enemy definitions, and narrative text live
-in `src/content/` as JSON with TypeScript types. Adding content must
+in `packages/texts/` as JSON with TypeScript types. Adding content must
 never require changing code. Do not hardcode tier values, spawn
 intervals, fall speeds, or word lists in TypeScript files.
 

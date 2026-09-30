@@ -20,16 +20,6 @@
     "exactOptionalPropertyTypes": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-
-    /* Base path & aliases */
-    "baseUrl": ".",
-    "paths": {
-      "@engine/*": ["src/engine/*"],
-      "@ui/*": ["src/ui/*"],
-      "@store/*": ["src/store/*"],
-      "@content/*": ["src/content/*"]
-    }
-  },
-  "include": ["src", "vite.config.ts"]
+    "noFallthroughCasesInSwitch": true
+  }
 }
