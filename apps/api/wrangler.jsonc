@@ -1,5 +1,12 @@
 {
   "name": "typefight-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-09-01"
+  "compatibility_date": "2026-09-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "typefight-db",
+      "database_id": "9ad53467-153b-4903-a3aa-82121d0d7517"
+    }
+  ]
 }
