@@ -19,12 +19,14 @@
     "format:check": "prettier --check .",
     "check": "npm run format:check && npm run lint && npm run typecheck",
     "test": "npm run test --workspaces --if-present",
+    "test:engine": "npm run test:coverage -w @typefight/engine",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.13.4",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.1.0",
