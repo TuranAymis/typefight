@@ -1,0 +1,26 @@
+{
+  "record": {
+    "version": 1,
+    "targetText": "abc",
+    "locale": "en",
+    "events": [
+      { "t": 100, "key": "a" },
+      { "t": 200, "key": "x" },
+      { "t": 300, "key": "c" }
+    ],
+    "durationMs": 60000
+  },
+  "expected": {
+    "wpm": 0.4,
+    "rawWpm": 0.6,
+    "accuracy": 66.67,
+    "consistency": 100,
+    "typedChars": 3,
+    "correctChars": 2,
+    "errorChars": 1,
+    "uncorrectedErrors": 1,
+    "correctedErrors": 0,
+    "backspaces": 0,
+    "durationMs": 60000
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "record": {
+    "version": 1,
+    "targetText": "ab",
+    "locale": "en",
+    "events": [
+      { "t": 100, "key": "a" },
+      { "t": 200, "key": "x" },
+      { "t": 250, "key": "Backspace" },
+      { "t": 300, "key": "b" }
+    ],
+    "durationMs": 30000
+  },
+  "expected": {
+    "wpm": 0.8,
+    "rawWpm": 1.2,
+    "accuracy": 66.67,
+    "consistency": 100,
+    "typedChars": 3,
+    "correctChars": 2,
+    "errorChars": 1,
+    "uncorrectedErrors": 0,
+    "correctedErrors": 1,
+    "backspaces": 1,
+    "durationMs": 30000
+  }
+}

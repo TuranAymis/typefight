@@ -1,0 +1,16 @@
+{
+  "record": { "version": 1, "targetText": "abc", "locale": "en", "events": [], "durationMs": 0 },
+  "expected": {
+    "wpm": 0,
+    "rawWpm": 0,
+    "accuracy": 0,
+    "consistency": 0,
+    "typedChars": 0,
+    "correctChars": 0,
+    "errorChars": 0,
+    "uncorrectedErrors": 0,
+    "correctedErrors": 0,
+    "backspaces": 0,
+    "durationMs": 0
+  }
+}

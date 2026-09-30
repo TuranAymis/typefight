@@ -1,0 +1,25 @@
+{
+  "record": {
+    "version": 1,
+    "targetText": "ış",
+    "locale": "tr",
+    "events": [
+      { "t": 100, "key": "ı" },
+      { "t": 200, "key": "ş" }
+    ],
+    "durationMs": 60000
+  },
+  "expected": {
+    "wpm": 0.4,
+    "rawWpm": 0.4,
+    "accuracy": 100,
+    "consistency": 0,
+    "typedChars": 2,
+    "correctChars": 2,
+    "errorChars": 0,
+    "uncorrectedErrors": 0,
+    "correctedErrors": 0,
+    "backspaces": 0,
+    "durationMs": 60000
+  }
+}
