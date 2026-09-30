@@ -15,7 +15,8 @@ export const ResultsScreen = () => {
       <div className={styles.placeholderBox}>
         <span className={styles.placeholderCode}>[ Placeholder Screen: Telemetry inactive ]</span>
         <p className={styles.cardDesc}>
-          Metrics will compute: WPM = (correct_chars / 5) / time_minutes, Accuracy = first_try_hits / total_hits, Score = WPM × Accuracy.
+          Metrics will compute: WPM = (correct_chars / 5) / time_minutes, Accuracy = first_try_hits
+          / total_hits, Score = WPM × Accuracy.
         </p>
       </div>
 

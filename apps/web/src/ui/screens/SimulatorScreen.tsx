@@ -21,15 +21,15 @@ export const SimulatorScreen = () => {
 
   const typedPart = targetText.slice(0, cursorIndex);
   const cursorChar = cursorIndex < targetText.length ? targetText[cursorIndex] : '';
-  const remainingPart =
-    cursorIndex < targetText.length ? targetText.slice(cursorIndex + 1) : '';
+  const remainingPart = cursorIndex < targetText.length ? targetText.slice(cursorIndex + 1) : '';
 
   return (
     <div className={styles.screenContainer} id="screen-simulator">
       <span className={styles.badge}>Simulator (Practice Wire)</span>
       <h1 className={styles.title}>The Simulator</h1>
       <p className={styles.description}>
-        Blocking input active: press the highlighted key to advance. Wrong keys block and mark errors.
+        Blocking input active: press the highlighted key to advance. Wrong keys block and mark
+        errors.
       </p>
 
       <div className={styles.typingContainer}>

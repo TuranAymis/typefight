@@ -13,9 +13,12 @@ export const GauntletScreen = () => {
       </p>
 
       <div className={styles.placeholderBox}>
-        <span className={styles.placeholderCode}>[ Placeholder Screen: Gauntlet Combat inactive ]</span>
+        <span className={styles.placeholderCode}>
+          [ Placeholder Screen: Gauntlet Combat inactive ]
+        </span>
         <p className={styles.cardDesc}>
-          Enemy waves, integrity bar, procedural tier progression, and boss encounters will be implemented in subsequent phases.
+          Enemy waves, integrity bar, procedural tier progression, and boss encounters will be
+          implemented in subsequent phases.
         </p>
       </div>
 

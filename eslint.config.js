@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
@@ -21,10 +22,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       // Strict rule: ban "any" everywhere
       '@typescript-eslint/no-explicit-any': 'error',
     },
@@ -97,12 +95,14 @@ export default tseslint.config(
         {
           object: 'Math',
           property: 'random',
-          message: 'Engine must not call Math.random(). Randomness must come from an injected seeded RNG.',
+          message:
+            'Engine must not call Math.random(). Randomness must come from an injected seeded RNG.',
         },
         {
           object: 'performance',
           property: 'now',
-          message: 'Engine must not call performance.now(). Timestamps must be passed in as parameters.',
+          message:
+            'Engine must not call performance.now(). Timestamps must be passed in as parameters.',
         },
       ],
       'no-restricted-syntax': [
@@ -113,5 +113,6 @@ export default tseslint.config(
         },
       ],
     },
-  }
+  },
+  prettier,
 );

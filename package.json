@@ -15,6 +15,9 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run typecheck",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
@@ -26,6 +29,8 @@
     "globals": "^15.15.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.9"
   }
 }
