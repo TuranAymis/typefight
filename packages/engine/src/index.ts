@@ -1,14 +1,10 @@
-/**
- * Pure Game Engine Barrel
- *
- * CRITICAL RULE:
- * This module and all submodules MUST be pure functions and data structures.
- * Under no circumstances may code here import React or reference DOM globals
- * (window, document, localStorage, performance, etc.) or read ambient time.
- */
-
-export * from './typingTypes';
-export * from './typingReducer';
+export { isValidKey, createTypingState, typingReducer } from './typingReducer';
+export type { KeyInput, KeystrokeRecord, TypingState } from './typingTypes';
+export { RECORD_VERSION } from './session/types';
+export type { KeyEvent, SessionRecord, SessionResult, DamageEvent } from './session/types';
+export { computeResult } from './session/scoring';
+export { normalizeTypedText, isTypableChar } from './text/locale';
+export type { Locale } from './text/locale';
 
 export interface EngineVersionInfo {
   readonly name: string;
