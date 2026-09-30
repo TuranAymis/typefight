@@ -3,7 +3,7 @@
 ## 1. Authoritative Specification
 
 > [!IMPORTANT]
-> [docs/spec.md](file:///c:/turan-yazilim/turan-projeler/typefight/docs/spec.md) is the **authoritative design document** for this project.
+> [docs/spec.md](docs/spec.md) is the **authoritative design document** for this project.
 > It is written in Turkish. **It MUST be read at the start of every session.**
 >
 > All code, identifiers, comments, file names, commit messages, and project documentation that you write **must be in English**.
