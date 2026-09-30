@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy:staging": "wrangler deploy --env staging"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260702.1",
