@@ -1,14 +1,10 @@
-import { useAppStore, useTypingStore } from '../../store';
-import { useTypingBridge } from '../hooks/useTypingBridge';
+import { useAppStore } from '../../store';
+import { useTypingSurface } from '../hooks/useTypingSurface';
 import styles from './Screens.module.css';
 
 export const SimulatorScreen = () => {
   const setScreen = useAppStore((state) => state.setScreen);
-  const typingState = useTypingStore((state) => state.typingState);
-  const reset = useTypingStore((state) => state.reset);
-
-  // Activate the keydown bridge and rAF render loop
-  useTypingBridge(true);
+  const { typingState, elementRef, reset, warning } = useTypingSurface();
 
   const {
     targetText,
@@ -32,7 +28,14 @@ export const SimulatorScreen = () => {
         errors.
       </p>
 
-      <div className={styles.typingContainer}>
+      <div
+        className={styles.typingContainer}
+        ref={elementRef}
+        tabIndex={0}
+        role="textbox"
+        aria-label="Yazma alanı"
+      >
+        {warning && <p role="alert">{warning}</p>}
         <div className={styles.streamDisplay} id="typing-stream">
           <span className={styles.charTyped} id="typed-part">
             {typedPart}
