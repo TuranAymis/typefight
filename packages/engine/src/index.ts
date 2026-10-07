@@ -5,6 +5,25 @@ export type { KeyEvent, SessionRecord, SessionResult, DamageEvent } from './sess
 export { computeResult } from './session/scoring';
 export { normalizeTypedText, isTypableChar } from './text/locale';
 export type { Locale } from './text/locale';
+export { DUEL_CONFIG, applyDamage, computeDamage, replayDuelWords, simulateDuel } from './duel';
+export type { DamageInput, DuelConfig, DuelResult, DuelTimelineEvent } from './duel';
+export {
+  GLITCH_CONFIG,
+  createGlitchRng,
+  placeGlitches,
+  canFireGlitch,
+  resolveGlitchAttempt,
+  recordGlitchFire,
+  replayGlitchFires,
+} from './glitch';
+export type {
+  GlitchType,
+  GlitchPlacement,
+  GlitchFire,
+  LastFires,
+  GlitchAttempt,
+  GlitchAttemptResult,
+} from './glitch';
 
 export interface EngineVersionInfo {
   readonly name: string;
