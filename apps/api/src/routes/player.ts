@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { validateNickname } from '@typefight/texts';
 import { findPlayerByToken } from '../auth';
 import { randomId, randomToken, sha256Hex } from '../crypto';
+import { clientIpHash, tooManyNewPlayers } from '../rateLimit';
 import type { AppContext } from '../types';
 
 export const player = new Hono<AppContext>();
@@ -34,12 +35,18 @@ player.post('/', async (context) => {
     nickname = check.nickname;
   }
 
+  const ipHash = await clientIpHash(context);
+  const now = context.get('now')();
+  if (await tooManyNewPlayers(context.env.DB, now, ipHash)) {
+    return context.json({ error: 'rate_limited' }, 429, { 'Retry-After': '3600' });
+  }
+
   const id = randomId();
   const deviceToken = randomToken();
   await context.env.DB.prepare(
-    'INSERT INTO players (id, nickname, token_hash, created_at) VALUES (?, ?, ?, ?)',
+    'INSERT INTO players (id, nickname, token_hash, created_at, ip_hash) VALUES (?, ?, ?, ?, ?)',
   )
-    .bind(id, nickname, await sha256Hex(deviceToken), context.get('now')())
+    .bind(id, nickname, await sha256Hex(deviceToken), now, ipHash)
     .run();
   return context.json({ created: true, playerId: id, nickname, deviceToken }, 201);
 });

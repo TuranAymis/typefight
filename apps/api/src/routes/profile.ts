@@ -28,7 +28,8 @@ profile.get('/:id', async (context) => {
 
   const stats = await db
     .prepare(
-      `SELECT COUNT(*) AS sessions_count, MAX(wpm) AS best_wpm, AVG(accuracy) AS avg_accuracy
+      `SELECT COUNT(*) AS sessions_count, MAX(CASE WHEN verified = 1 THEN wpm END) AS best_wpm,
+         AVG(CASE WHEN verified = 1 THEN accuracy END) AS avg_accuracy
        FROM sessions WHERE player_id = ? AND status = 'submitted'`,
     )
     .bind(id)
