@@ -75,6 +75,25 @@ export const findRealGhost = async (
   return undefined;
 };
 
+/**
+ * The same opponent run again (rematch): only verified submitted runs of the requested language,
+ * never the player's own run.
+ */
+export const findOpponentBySession = async (
+  db: D1Database,
+  input: { playerId: string; sessionId: string; lang: 'en' | 'tr' },
+): Promise<Opponent | undefined> => {
+  const row = await db
+    .prepare(
+      `${GHOST_SELECT}
+       WHERE s.id = ? AND s.status = 'submitted' AND s.verified = 1 AND s.record_json IS NOT NULL
+         AND s.lang = ? AND s.player_id != ?`,
+    )
+    .bind(input.sessionId, input.lang, input.playerId)
+    .first<GhostRow>();
+  return row ? toOpponent(row) : undefined;
+};
+
 /** Typical speed of the player, used to choose a bot level. New players start at 50 WPM. */
 export const expectedWpm = async (db: D1Database, playerId: string): Promise<number> => {
   const row = await db

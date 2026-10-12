@@ -72,6 +72,23 @@ export const MenuScreen = () => {
 
         <div className={styles.card}>
           <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>Duel</span>
+            <span className={styles.cardTag}>Ghost PvP</span>
+          </div>
+          <p className={styles.cardDesc}>
+            Fight a recorded run of a real player (or a labelled bot) and climb the ratings.
+          </p>
+          <button
+            id="nav-to-duel"
+            className={`${styles.button} ${styles.primaryButton}`}
+            onClick={() => setScreen('duel')}
+          >
+            Find a Duel
+          </button>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Leaderboard</span>
             <span className={styles.cardTag}>Rankings</span>
           </div>

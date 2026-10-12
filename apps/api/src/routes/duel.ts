@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { simulateDuel, updateRatings } from '@typefight/engine';
 import type { SessionRecord } from '@typefight/engine';
-import { pickPassage } from '@typefight/texts';
+import { pickPassage, TEXT_POOL } from '@typefight/texts';
 import { findPlayerByToken } from '../auth';
 import { randomId, randomSeed } from '../crypto';
-import { findOpponent } from '../matchmaking';
+import { findOpponent, findOpponentBySession } from '../matchmaking';
 import { finishSession, isFailure, isLang, startSession } from '../sessionService';
 import type { AppContext } from '../types';
 
@@ -17,17 +17,39 @@ export const duel = new Hono<AppContext>();
 duel.post('/start', async (context) => {
   const current = await findPlayerByToken(context);
   if (!current) return context.json({ error: 'unauthorized' }, 401);
-  const body = (await context.req.json().catch(() => ({}))) as { lang?: unknown };
+  const body = (await context.req.json().catch(() => ({}))) as {
+    lang?: unknown;
+    rematchSessionId?: unknown;
+  };
   const lang = body.lang ?? 'en';
   if (!isLang(lang)) return context.json({ error: 'invalid_lang' }, 400);
 
-  const passage = pickPassage(lang, randomSeed());
-  const opponent = await findOpponent(context.env.DB, context.get('now')(), {
-    playerId: current.id,
-    rating: current.rating,
-    lang,
-    passage,
-  });
+  // Rematch: same opponent run on the same text. Otherwise pick a text and match on it.
+  let passage = pickPassage(lang, randomSeed());
+  let rematch: Awaited<ReturnType<typeof findOpponentBySession>>;
+  if (body.rematchSessionId !== undefined) {
+    if (typeof body.rematchSessionId !== 'string') {
+      return context.json({ error: 'invalid_rematch' }, 400);
+    }
+    rematch = await findOpponentBySession(context.env.DB, {
+      playerId: current.id,
+      sessionId: body.rematchSessionId,
+      lang,
+    });
+    const rematchPassage = TEXT_POOL.find(
+      (entry) => entry.lang === lang && entry.text === rematch?.record.targetText,
+    );
+    if (!rematch || !rematchPassage) return context.json({ error: 'invalid_rematch' }, 404);
+    passage = rematchPassage;
+  }
+  const opponent =
+    rematch ??
+    (await findOpponent(context.env.DB, context.get('now')(), {
+      playerId: current.id,
+      rating: current.rating,
+      lang,
+      passage,
+    }));
   const started = await startSession(context, current, 'duel', lang, {
     passage,
     ghostSessionId: opponent.sessionId,
@@ -39,6 +61,7 @@ duel.post('/start', async (context) => {
     {
       ...started,
       opponent: {
+        sessionId: opponent.sessionId,
         nickname: opponent.nickname,
         rating: opponent.rating,
         isBot: opponent.isBot,

@@ -292,3 +292,50 @@ describe('POST /api/duel/submit', () => {
     expect(profile.json.rating).toBeGreaterThan(1000);
   });
 });
+
+describe('rematch', () => {
+  it('replays the same opponent run on the same text', async () => {
+    const me = await createPlayer();
+    const rival = await createPlayer();
+    addGhostRuns(rival.id, 55);
+    const first = await call('POST', '/api/duel/start', { token: me.token, body: { lang: 'en' } });
+    const ghostId = `ghost-${rival.id}-${first.json.textId}`;
+    const again = await call('POST', '/api/duel/start', {
+      token: me.token,
+      body: { lang: 'en', rematchSessionId: ghostId },
+    });
+    expect(again.status).toBe(201);
+    expect(again.json.text).toBe(first.json.text);
+    expect(again.json.opponent).toMatchObject({ isBot: false, wpm: 55 });
+  });
+
+  it('works against a bot and rejects unknown, own, unverified or malformed targets', async () => {
+    const me = await createPlayer();
+    const first = await call('POST', '/api/duel/start', { token: me.token, body: { lang: 'en' } });
+    const botSession = `bot-50-${first.json.textId}`;
+    const again = await call('POST', '/api/duel/start', {
+      token: me.token,
+      body: { lang: 'en', rematchSessionId: botSession },
+    });
+    expect(again.status).toBe(201);
+    expect(again.json.opponent.isBot).toBe(true);
+    expect(again.json.text).toBe(first.json.text);
+
+    const cheater = await createPlayer();
+    addGhostRuns(cheater.id, 300, { verified: 0 });
+    addGhostRuns(me.id, 60);
+    const target = (id: string) => `ghost-${id}-en-001`;
+    for (const rematchSessionId of ['nope', target(cheater.id), target(me.id)]) {
+      const response = await call('POST', '/api/duel/start', {
+        token: me.token,
+        body: { lang: 'en', rematchSessionId },
+      });
+      expect(response.status).toBe(404);
+    }
+    const malformed = await call('POST', '/api/duel/start', {
+      token: me.token,
+      body: { lang: 'en', rematchSessionId: 5 },
+    });
+    expect(malformed.status).toBe(400);
+  });
+});
