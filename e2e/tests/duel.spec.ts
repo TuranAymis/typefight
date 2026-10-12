@@ -64,6 +64,7 @@ test('duel flow: find opponent, countdown, fight with live HP, result, rematch a
       body: JSON.stringify({
         sessionId: 's1',
         verified: true,
+        newBadges: [{ id: 'first-win', name: 'First Win' }],
         result: { wpm: 80, accuracy: 100 },
         duel: {
           winner: 'player',
@@ -99,6 +100,7 @@ test('duel flow: find opponent, countdown, fight with live HP, result, rematch a
   await page.keyboard.type('brown fox jumps over the lazy dog', { delay: 40 });
 
   await expect(page.locator('#duel-result-title')).toHaveText('Victory');
+  await expect(page.locator('#duel-new-badges')).toContainText('First Win');
   await expect(page.locator('#duel-result-rating')).toContainText('1000 → 1016 (+16)');
   expect(submissions).toHaveLength(1);
   expect(submissions[0]?.events.map((event) => event.key).join('')).toBe(TEXT);

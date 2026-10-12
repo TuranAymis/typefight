@@ -7,6 +7,7 @@ export interface Profile {
   readonly sessions: number;
   readonly bestWpm: number;
   readonly averageAccuracy: number;
+  readonly badges: readonly { readonly id: string; readonly earnedAt: number }[];
   readonly duels: {
     readonly played: number;
     readonly won: number;
@@ -33,7 +34,8 @@ const isProfile = (
   typeof body['bestWpm'] === 'number' &&
   typeof body['averageAccuracy'] === 'number' &&
   typeof body['duels'] === 'object' &&
-  body['duels'] !== null;
+  body['duels'] !== null &&
+  Array.isArray(body['badges']);
 
 export const fetchProfile = async (
   playerId: string,

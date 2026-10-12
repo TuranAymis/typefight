@@ -428,6 +428,11 @@ export const DuelScreen = () => {
             ? `Rating ${outcome.duel.rating.before} → ${outcome.duel.rating.after} (${outcome.duel.rating.delta >= 0 ? '+' : ''}${outcome.duel.rating.delta})`
             : 'This run did not count for your rating.'}
         </p>
+        {outcome.newBadges && outcome.newBadges.length > 0 && (
+          <p id="duel-new-badges" role="status">
+            Badge unlocked: {outcome.newBadges.map((badge) => badge.name).join(', ')}
+          </p>
+        )}
         <div className={styles.actionRow}>
           <button
             id="duel-rematch"

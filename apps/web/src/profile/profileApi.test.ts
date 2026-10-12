@@ -12,6 +12,7 @@ const profile = {
   bestWpm: 88,
   averageAccuracy: 96.5,
   duels: { played: 4, won: 3, lost: 1, drawn: 0 },
+  badges: [{ id: 'first-duel', earnedAt: 5 }],
 };
 
 describe('profile api', () => {

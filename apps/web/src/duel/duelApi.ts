@@ -19,6 +19,7 @@ export interface DuelStart {
 
 export interface DuelOutcome {
   readonly verified: boolean;
+  readonly newBadges?: readonly { readonly id: string; readonly name: string }[];
   readonly result: { readonly wpm: number; readonly accuracy: number };
   readonly duel: {
     readonly winner: 'player' | 'opponent' | 'draw';

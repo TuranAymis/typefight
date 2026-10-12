@@ -47,6 +47,11 @@ profile.get('/:id', async (context) => {
     else duels.drawn = row.total;
   }
 
+  const badges = await db
+    .prepare('SELECT badge_id, earned_at FROM badges WHERE player_id = ? ORDER BY earned_at')
+    .bind(id)
+    .all<{ badge_id: string; earned_at: number }>();
+
   return context.json({
     playerId: found.id,
     nickname: found.nickname,
@@ -56,5 +61,6 @@ profile.get('/:id', async (context) => {
     bestWpm: stats?.best_wpm ?? 0,
     averageAccuracy: round2(stats?.avg_accuracy ?? 0),
     duels,
+    badges: badges.results.map((row) => ({ id: row.badge_id, earnedAt: row.earned_at })),
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BADGES } from '@typefight/texts';
 import { useAppStore, useIdentityStore } from '../../store';
 import { createRecoveryCode, fetchProfile, winRate } from '../../profile/profileApi';
 import type { Profile } from '../../profile/profileApi';
@@ -95,6 +96,31 @@ export const ProfileScreen = () => {
             <dd id="stat-duels">{state.profile.duels.played}</dd>
           </div>
         </dl>
+      )}
+
+      {state.status === 'ready' && (
+        <section aria-labelledby="badges-title" className={styles.recoveryBox}>
+          <h2 id="badges-title" className={styles.cardTitle}>
+            Badges ({state.profile.badges.length}/{BADGES.length})
+          </h2>
+          <ul className={styles.badgeGrid} id="badge-list">
+            {BADGES.map((badge) => {
+              const owned = state.profile.badges.some((entry) => entry.id === badge.id);
+              return (
+                <li
+                  key={badge.id}
+                  data-badge={badge.id}
+                  data-earned={owned}
+                  className={owned ? styles.badgeOwned : styles.badgeLocked}
+                  title={badge.description}
+                >
+                  <strong>{badge.name}</strong>
+                  <span>{owned ? 'Earned' : badge.description}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       <section className={styles.recoveryBox} aria-labelledby="recovery-title">

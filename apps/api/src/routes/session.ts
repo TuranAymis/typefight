@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { findPlayerByToken } from '../auth';
+import { awardBadges } from '../badges';
 import { finishSession, isFailure, isLang, startSession } from '../sessionService';
 import type { AppContext } from '../types';
 
@@ -45,10 +46,14 @@ session.post('/submit', async (context) => {
 
   const finished = await finishSession(context, current, 'simulator', body);
   if (isFailure(finished)) return context.json({ error: finished.error }, finished.status);
+  const newBadges = finished.verified
+    ? await awardBadges(context.env.DB, current.id, context.get('now')())
+    : [];
   // Flags stay server-side so cheaters cannot tune against them.
   return context.json({
     sessionId: finished.row.id,
     result: finished.result,
     verified: finished.verified,
+    newBadges,
   });
 });
