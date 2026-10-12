@@ -14,6 +14,8 @@
     "wrangler": "^4.143.0"
   },
   "dependencies": {
+    "@typefight/engine": "*",
+    "@typefight/texts": "*",
     "hono": "^4.13.11"
   }
 }

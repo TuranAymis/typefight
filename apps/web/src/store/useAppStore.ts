@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type Screen = 'menu' | 'simulator' | 'gauntlet' | 'results';
+export type Screen = 'menu' | 'simulator' | 'gauntlet' | 'results' | 'nickname';
 
 export interface AppState {
   currentScreen: Screen;

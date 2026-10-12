@@ -1,12 +1,19 @@
-import { useAppStore } from '../store';
+import { useEffect } from 'react';
+import { useAppStore, useIdentityStore } from '../store';
 import { MenuScreen } from './screens/MenuScreen';
 import { SimulatorScreen } from './screens/SimulatorScreen';
 import { GauntletScreen } from './screens/GauntletScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
+import { NicknameScreen } from './screens/NicknameScreen';
 import styles from './App.module.css';
 
 export const App = () => {
   const currentScreen = useAppStore((state) => state.currentScreen);
+  const restoreIdentity = useIdentityStore((state) => state.restore);
+
+  useEffect(() => {
+    void restoreIdentity();
+  }, [restoreIdentity]);
 
   return (
     <div className={styles.appLayout}>
@@ -32,6 +39,7 @@ export const App = () => {
         {currentScreen === 'simulator' && <SimulatorScreen />}
         {currentScreen === 'gauntlet' && <GauntletScreen />}
         {currentScreen === 'results' && <ResultsScreen />}
+        {currentScreen === 'nickname' && <NicknameScreen />}
       </main>
     </div>
   );
