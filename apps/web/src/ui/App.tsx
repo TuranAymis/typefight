@@ -7,6 +7,7 @@ import { ResultsScreen } from './screens/ResultsScreen';
 import { NicknameScreen } from './screens/NicknameScreen';
 import { LeaderboardScreen } from './screens/LeaderboardScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { DuelScreen } from './screens/DuelScreen';
 import styles from './App.module.css';
 
 export const App = () => {
@@ -44,6 +45,7 @@ export const App = () => {
         {currentScreen === 'nickname' && <NicknameScreen />}
         {currentScreen === 'leaderboard' && <LeaderboardScreen />}
         {currentScreen === 'profile' && <ProfileScreen />}
+        {currentScreen === 'duel' && <DuelScreen />}
       </main>
     </div>
   );

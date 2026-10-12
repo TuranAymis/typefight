@@ -1,0 +1,450 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RECORD_VERSION, computeComboTimeline } from '@typefight/engine';
+import type { KeyEvent } from '@typefight/engine';
+import { useAppStore, useIdentityStore } from '../../store';
+import { startDuel, submitDuel } from '../../duel/duelApi';
+import type { DuelApiError, DuelOutcome, DuelStart } from '../../duel/duelApi';
+import {
+  COUNTDOWN_SECONDS,
+  DUEL_DURATION_MS,
+  MAX_HP,
+  ghostPosition,
+  liveDuel,
+  trimEvents,
+} from '../../duel/duelLive';
+import { useTypingSurface } from '../hooks/useTypingSurface';
+import styles from './Screens.module.css';
+
+type Phase =
+  | { readonly name: 'lobby' }
+  | { readonly name: 'searching' }
+  | { readonly name: 'found'; readonly duel: DuelStart }
+  | { readonly name: 'countdown'; readonly duel: DuelStart; readonly remaining: number }
+  | { readonly name: 'fight'; readonly duel: DuelStart }
+  | { readonly name: 'submitting'; readonly duel: DuelStart }
+  | { readonly name: 'result'; readonly duel: DuelStart; readonly outcome: DuelOutcome }
+  | { readonly name: 'error'; readonly error: DuelApiError; readonly retry: () => void };
+
+const FOUND_MS = 1500;
+const DAMAGE_FLASH_MS = 900;
+
+const ERROR_MESSAGES: Record<DuelApiError, string> = {
+  unauthorized: 'Your profile was not recognised. Pick a nickname again.',
+  rate_limited: 'Too many duels in a short time. Wait a few minutes.',
+  not_found: 'That opponent is no longer available.',
+  network: 'Could not reach the server. Check your connection.',
+  server: 'Something went wrong. Try again.',
+};
+
+const REASON_LABELS: Record<DuelOutcome['duel']['reason'], string> = {
+  ko: 'Knockout',
+  hp: 'More HP when time ran out',
+  wpm: 'Higher WPM after equal HP',
+  accuracy: 'Higher accuracy after equal HP and WPM',
+  draw: 'Dead even',
+};
+
+const HpBar = ({ id, label, hp }: { id: string; label: string; hp: number }) => (
+  <div className={styles.hpBlock}>
+    <span className={styles.hpLabel}>{label}</span>
+    <div
+      id={id}
+      className={styles.hpTrack}
+      role="progressbar"
+      aria-label={`${label} HP`}
+      aria-valuemin={0}
+      aria-valuemax={MAX_HP}
+      aria-valuenow={hp}
+    >
+      <div className={styles.hpFill} style={{ width: `${(hp / MAX_HP) * 100}%` }} />
+    </div>
+    <span className={styles.hpValue}>{hp}</span>
+  </div>
+);
+
+interface FightViewProps {
+  readonly duel: DuelStart;
+  readonly nickname: string;
+  readonly onFinish: (duel: DuelStart, events: readonly KeyEvent[], endsAt: number) => void;
+}
+
+/** The running duel. Mounted only for the fight so the typing surface binds to its own element. */
+const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
+  const { typingState, events, elementRef, reset } = useTypingSurface();
+  const [elapsed, setElapsed] = useState(0);
+  const opponent = duel.opponent;
+
+  // The clock starts together with a fresh typing record, so keystroke times and the ghost replay
+  // share the same zero.
+  useEffect(() => {
+    reset(duel.text);
+    const startedAt = performance.now();
+    let frame = 0;
+    const tick = () => {
+      setElapsed(Math.min(performance.now() - startedAt, DUEL_DURATION_MS));
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+    // reset is stable per surface; run once per fight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duel]);
+
+  const live = useMemo(
+    () =>
+      liveDuel({
+        targetText: duel.text,
+        locale: duel.lang,
+        events,
+        elapsedMs: elapsed,
+        ghost: opponent.record,
+      }),
+    [duel, opponent.record, events, elapsed],
+  );
+  const combo = useMemo(() => {
+    const timeline = computeComboTimeline({
+      version: RECORD_VERSION,
+      targetText: duel.text,
+      locale: duel.lang,
+      events: events.filter((event) => event.t <= elapsed),
+      durationMs: Math.max(elapsed, 1),
+    });
+    const staggered = timeline.events.some(
+      (event) => event.type === 'stagger' && event.t <= elapsed && elapsed < event.endsAt,
+    );
+    return { combo: timeline.finalCombo, staggered };
+  }, [duel, events, elapsed]);
+
+  // End conditions: knockout, text finished, or time up.
+  useEffect(() => {
+    if (live.koAt !== null) onFinish(duel, events, live.koAt);
+    else if (typingState.isComplete) {
+      onFinish(duel, events, (events[events.length - 1]?.t ?? 0) + 1);
+    } else if (elapsed >= DUEL_DURATION_MS) onFinish(duel, events, DUEL_DURATION_MS);
+  }, [duel, live, typingState.isComplete, elapsed, events, onFinish]);
+
+  const hp = live.hp;
+  const remainingSeconds = Math.max(0, Math.ceil((DUEL_DURATION_MS - elapsed) / 1000));
+  const ghostAt = ghostPosition(opponent.record, elapsed);
+  const flashes = live.damageEvents.filter((event) => elapsed - event.t < DAMAGE_FLASH_MS);
+  const chars = [...duel.text];
+
+  return (
+    <div className={styles.screenContainer} id="screen-duel">
+      <div className={styles.hud} id="duel-hud">
+        <HpBar id="hp-player" label={nickname} hp={hp.player} />
+        <div className={styles.hudCenter}>
+          <span id="duel-timer" className={styles.timer}>
+            {remainingSeconds}
+          </span>
+          <span id="duel-combo" className={styles.comboPill}>
+            Combo x{combo.combo}
+          </span>
+          {combo.staggered && (
+            <span id="duel-stagger" className={styles.staggerPill}>
+              Staggered
+            </span>
+          )}
+        </div>
+        <HpBar id="hp-opponent" label={opponent.nickname} hp={hp.opponent} />
+      </div>
+
+      <div className={styles.damageRow} aria-live="polite">
+        {flashes.map((event) => (
+          <span
+            key={`${event.source}-${event.t}`}
+            className={event.source === 'player' ? styles.damageDealt : styles.damageTaken}
+            data-source={event.source}
+          >
+            {event.source === 'player'
+              ? `-${event.amount} ${opponent.nickname}`
+              : `-${event.amount} You`}
+          </span>
+        ))}
+      </div>
+
+      <div
+        className={styles.typingContainer}
+        ref={elementRef}
+        tabIndex={0}
+        role="textbox"
+        aria-label="Duel typing area"
+      >
+        <div className={styles.streamDisplay} id="duel-stream">
+          {chars.map((char, index) => (
+            <span
+              key={index}
+              className={[
+                index < typingState.cursorIndex ? styles.charTyped : styles.charRemaining,
+                index === typingState.cursorIndex
+                  ? `${styles.charCursor} ${typingState.erroredAtCurrentIndex ? styles.charCursorError : ''}`
+                  : '',
+                index === ghostAt.cursor ? styles.ghostMark : '',
+              ].join(' ')}
+            >
+              {char}
+            </span>
+          ))}
+        </div>
+        <div className={styles.ghostTrack} aria-hidden="true">
+          <div
+            id="ghost-progress"
+            className={styles.ghostFill}
+            style={{ width: `${(ghostAt.cursor / chars.length) * 100}%` }}
+          />
+        </div>
+        <p className={styles.cardDesc}>
+          {opponent.isBot ? '[BOT] ' : 'Ghost: '}
+          {opponent.nickname} is at {ghostAt.cursor}/{chars.length}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export const DuelScreen = () => {
+  const setScreen = useAppStore((state) => state.setScreen);
+  const identity = useIdentityStore((state) => state.identity);
+  const [lang, setLang] = useState<'en' | 'tr'>('en');
+  const [phase, setPhase] = useState<Phase>({ name: 'lobby' });
+  const finishing = useRef(false);
+  const token = identity?.deviceToken;
+
+  const find = useCallback(
+    async (rematchSessionId?: string) => {
+      if (!token) return;
+      finishing.current = false;
+      setPhase({ name: 'searching' });
+      const result = await startDuel(token, lang, rematchSessionId);
+      if (!result.ok) {
+        setPhase({ name: 'error', error: result.error, retry: () => void find(rematchSessionId) });
+        return;
+      }
+      setPhase({ name: 'found', duel: result.duel });
+    },
+    [token, lang],
+  );
+
+  // Match Found -> 3-2-1 -> fight.
+  useEffect(() => {
+    if (phase.name === 'found') {
+      const timer = window.setTimeout(
+        () => setPhase({ name: 'countdown', duel: phase.duel, remaining: COUNTDOWN_SECONDS }),
+        FOUND_MS,
+      );
+      return () => window.clearTimeout(timer);
+    }
+    if (phase.name === 'countdown') {
+      const timer = window.setTimeout(() => {
+        if (phase.remaining > 1) setPhase({ ...phase, remaining: phase.remaining - 1 });
+        else setPhase({ name: 'fight', duel: phase.duel });
+      }, 1000);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [phase]);
+
+  const finish = useCallback(
+    async (duel: DuelStart, events: readonly KeyEvent[], endsAt: number) => {
+      if (!token || finishing.current) return;
+      finishing.current = true;
+      setPhase({ name: 'submitting', duel });
+      const submission = {
+        sessionId: duel.sessionId,
+        sessionToken: duel.sessionToken,
+        events: trimEvents(events, endsAt),
+        durationMs: Math.max(Math.round(endsAt), 1),
+      };
+      const send = async () => {
+        const result = await submitDuel(token, submission);
+        if (result.ok) setPhase({ name: 'result', duel, outcome: result.outcome });
+        else setPhase({ name: 'error', error: result.error, retry: () => void send() });
+      };
+      await send();
+    },
+    [token],
+  );
+
+  if (!identity) {
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <h1 className={styles.title}>Duel</h1>
+        <p>Pick a nickname first so your opponent knows who they are fighting.</p>
+        <button
+          className={`${styles.button} ${styles.primaryButton}`}
+          onClick={() => setScreen('nickname')}
+        >
+          Pick a nickname
+        </button>
+      </div>
+    );
+  }
+
+  if (phase.name === 'lobby') {
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <span className={styles.badge}>Ghost Duel</span>
+        <h1 className={styles.title}>Duel</h1>
+        <p className={styles.description}>
+          Race a real player&apos;s recorded run (or a clearly labelled bot) on the same text. Clean
+          words build combos and damage your opponent. 60 seconds, 100 HP each.
+        </p>
+        <div className={styles.boardTabs} role="radiogroup" aria-label="Language">
+          {(['en', 'tr'] as const).map((value) => (
+            <button
+              key={value}
+              role="radio"
+              aria-checked={lang === value}
+              id={`duel-lang-${value}`}
+              className={`${styles.button} ${lang === value ? styles.primaryButton : styles.secondaryButton}`}
+              onClick={() => setLang(value)}
+            >
+              {value.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div className={styles.actionRow}>
+          <button
+            id="duel-find"
+            className={`${styles.button} ${styles.primaryButton}`}
+            onClick={() => void find()}
+          >
+            Find Opponent
+          </button>
+          <button
+            id="duel-back"
+            className={`${styles.button} ${styles.secondaryButton}`}
+            onClick={() => setScreen('menu')}
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase.name === 'searching') {
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <h1 className={styles.title}>Searching…</h1>
+        <p id="duel-searching" role="status">
+          Looking for an opponent on your level.
+        </p>
+      </div>
+    );
+  }
+
+  if (phase.name === 'error') {
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <h1 className={styles.title}>Duel</h1>
+        <p id="duel-error" role="alert">
+          {ERROR_MESSAGES[phase.error]}
+        </p>
+        <div className={styles.actionRow}>
+          {phase.error !== 'unauthorized' && (
+            <button
+              id="duel-retry"
+              className={`${styles.button} ${styles.primaryButton}`}
+              onClick={phase.retry}
+            >
+              Try again
+            </button>
+          )}
+          <button
+            className={`${styles.button} ${styles.secondaryButton}`}
+            onClick={() => setPhase({ name: 'lobby' })}
+          >
+            Back to lobby
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const duel = phase.duel;
+  const opponent = duel.opponent;
+
+  if (phase.name === 'found' || phase.name === 'countdown') {
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <span className={styles.badge}>Match Found</span>
+        <h1 className={styles.title} id="duel-opponent-name">
+          {opponent.nickname}
+        </h1>
+        <p id="duel-opponent-info">
+          {opponent.isBot ? 'Training bot' : 'Ghost of a real player'} · rating {opponent.rating} ·{' '}
+          {opponent.wpm} WPM
+        </p>
+        {phase.name === 'countdown' && (
+          <p id="duel-countdown" className={styles.countdown} role="timer" aria-live="assertive">
+            {phase.remaining}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (phase.name === 'submitting') {
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <h1 className={styles.title}>Judging…</h1>
+        <p id="duel-submitting" role="status">
+          The server is confirming the fight.
+        </p>
+      </div>
+    );
+  }
+
+  if (phase.name === 'result') {
+    const { outcome } = phase;
+    const title =
+      outcome.duel.winner === 'player'
+        ? 'Victory'
+        : outcome.duel.winner === 'opponent'
+          ? 'Defeat'
+          : 'Draw';
+    return (
+      <div className={styles.screenContainer} id="screen-duel">
+        <span className={styles.badge}>{REASON_LABELS[outcome.duel.reason]}</span>
+        <h1 className={styles.title} id="duel-result-title" data-winner={outcome.duel.winner}>
+          {title}
+        </h1>
+        <p id="duel-result-detail">
+          You {outcome.duel.hp.a} HP · {opponent.nickname} {outcome.duel.hp.b} HP ·{' '}
+          {outcome.result.wpm} WPM · {outcome.result.accuracy}% accuracy
+        </p>
+        <p id="duel-result-rating">
+          {outcome.duel.ratingApplied
+            ? `Rating ${outcome.duel.rating.before} → ${outcome.duel.rating.after} (${outcome.duel.rating.delta >= 0 ? '+' : ''}${outcome.duel.rating.delta})`
+            : 'This run did not count for your rating.'}
+        </p>
+        <div className={styles.actionRow}>
+          <button
+            id="duel-rematch"
+            className={`${styles.button} ${styles.primaryButton}`}
+            onClick={() => void find(opponent.sessionId)}
+          >
+            Rematch
+          </button>
+          <button
+            id="duel-new-opponent"
+            className={`${styles.button} ${styles.primaryButton}`}
+            onClick={() => void find()}
+          >
+            New Opponent
+          </button>
+          <button
+            id="duel-to-menu"
+            className={`${styles.button} ${styles.secondaryButton}`}
+            onClick={() => setScreen('menu')}
+          >
+            Menu
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <FightView duel={duel} nickname={identity.nickname} onFinish={finish} />;
+};

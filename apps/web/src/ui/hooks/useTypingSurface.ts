@@ -20,8 +20,8 @@ export const useTypingSurface = () => {
   return {
     ...snapshot,
     elementRef,
-    reset: () => {
-      current.reset();
+    reset: (text?: string) => {
+      current.reset(text);
       elementRef.current?.focus();
     },
   };
