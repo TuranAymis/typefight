@@ -16,3 +16,4 @@ yarn-error.log
 .wrangler/
 playwright-report/
 test-results/
+.wrangler/

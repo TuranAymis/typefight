@@ -1,8 +1,9 @@
-import { useAppStore } from '../../store';
+import { useAppStore, useIdentityStore } from '../../store';
 import styles from './Screens.module.css';
 
 export const MenuScreen = () => {
   const setScreen = useAppStore((state) => state.setScreen);
+  const identity = useIdentityStore((state) => state.identity);
 
   return (
     <div className={styles.screenContainer} id="screen-menu">
@@ -10,6 +11,19 @@ export const MenuScreen = () => {
       <h1 className={styles.title}>TypeFight.io</h1>
       <p className={styles.description}>
         Competitive keyboard combat and training. Keyboard input is your weapon.
+      </p>
+
+      <p className={styles.cardDesc} id="player-line">
+        {identity ? `Playing as ${identity.nickname}` : 'No nickname yet.'}{' '}
+        {!identity && (
+          <button
+            id="nav-to-nickname"
+            className={`${styles.button} ${styles.secondaryButton}`}
+            onClick={() => setScreen('nickname')}
+          >
+            Pick a nickname
+          </button>
+        )}
       </p>
 
       <div className={styles.cardGrid}>

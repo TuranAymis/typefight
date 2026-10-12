@@ -14,3 +14,9 @@ export interface ContentManifest {
   readonly version: string;
   readonly tiers: readonly WordListTierMetadata[];
 }
+
+export interface TextPassage {
+  readonly id: string;
+  readonly lang: 'en' | 'tr';
+  readonly text: string;
+}

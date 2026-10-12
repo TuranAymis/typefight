@@ -294,3 +294,38 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.nicknameForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 360px;
+  text-align: left;
+}
+
+.nicknameInput {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+}
+
+.nicknameInput:focus-visible {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+.nicknameInput[aria-invalid='true'] {
+  border-color: var(--accent-pink);
+}
+
+.nicknameError {
+  min-height: 1.4em;
+  margin: 0 0 0.6rem;
+  color: var(--accent-pink);
+  font-size: 0.9rem;
+}

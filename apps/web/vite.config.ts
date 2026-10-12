@@ -7,5 +7,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: false,
+    // `npm run dev -w @typefight/api` (wrangler) serves the API on 8787.
+    proxy: { '/api': 'http://localhost:8787' },
   },
 });
