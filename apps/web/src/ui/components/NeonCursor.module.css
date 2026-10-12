@@ -1,0 +1,35 @@
+.cursor {
+  animation: blink var(--motion-cursor) infinite alternate;
+}
+.block {
+  color: var(--color-text-inverse);
+  background: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+}
+.underline {
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-primary);
+}
+.error {
+  color: var(--color-text-inverse);
+  background: var(--color-danger);
+  box-shadow: var(--shadow-danger);
+  animation: none;
+}
+@keyframes blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :global([data-motion='reduced']) .cursor {
+    animation: none;
+  }
+}
+:global([data-motion='reduced']) .cursor {
+  animation: none;
+}

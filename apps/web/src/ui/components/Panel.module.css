@@ -1,0 +1,13 @@
+.panel {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-8) var(--space-6);
+}
+
+.title {
+  color: var(--color-primary);
+  font: 700 var(--font-size-xl) var(--font-display);
+  margin: 0 0 var(--space-4);
+}

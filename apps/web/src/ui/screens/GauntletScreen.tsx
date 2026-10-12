@@ -1,4 +1,5 @@
 import { useAppStore } from '../../store';
+import { Button, Panel } from '../components';
 import styles from './Screens.module.css';
 
 export const GauntletScreen = () => {
@@ -12,7 +13,7 @@ export const GauntletScreen = () => {
         Wave defense mode. Descending words, target locking, and idle typo penalties.
       </p>
 
-      <div className={styles.placeholderBox}>
+      <Panel className={styles.placeholderBox}>
         <span className={styles.placeholderCode}>
           [ Placeholder Screen: Gauntlet Combat inactive ]
         </span>
@@ -20,23 +21,15 @@ export const GauntletScreen = () => {
           Enemy waves, integrity bar, procedural tier progression, and boss encounters will be
           implemented in subsequent phases.
         </p>
-      </div>
+      </Panel>
 
       <div className={styles.actionRow}>
-        <button
-          id="nav-gauntlet-to-menu"
-          className={`${styles.button} ${styles.secondaryButton}`}
-          onClick={() => setScreen('menu')}
-        >
+        <Button id="nav-gauntlet-to-menu" variant="secondary" onClick={() => setScreen('menu')}>
           Return to Menu
-        </button>
-        <button
-          id="nav-gauntlet-to-results"
-          className={`${styles.button} ${styles.primaryButton}`}
-          onClick={() => setScreen('results')}
-        >
+        </Button>
+        <Button id="nav-gauntlet-to-results" variant="primary" onClick={() => setScreen('results')}>
           Complete Encounter
-        </button>
+        </Button>
       </div>
     </div>
   );

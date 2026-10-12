@@ -2,55 +2,69 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at 50% 0%, #151d2f 0%, #0a0d14 70%);
+  background: radial-gradient(circle at 50% 0%, var(--color-bg-spot) 0%, var(--color-bg) 70%);
 }
 
 .topBar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid var(--border-subtle);
-  background: rgba(10, 13, 20, 0.85);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-4) var(--space-8);
+  border-bottom: var(--border-thin);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(8px);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  z-index: var(--z-header);
 }
 
 .brandLogo {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: #fff;
+  color: var(--color-text);
   text-transform: uppercase;
 }
 
 .brandHighlight {
-  color: var(--accent-cyan);
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  color: var(--color-primary);
+  text-shadow: 0 0 12px var(--color-glow-primary);
 }
 
 .statusBar {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
 }
 
 .statusIndicator {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: var(--space-2);
+  height: var(--space-2);
   border-radius: 50%;
-  background-color: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
-  margin-right: 0.5rem;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  margin-right: var(--space-2);
+}
+
+.motionControl {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.motionSelect {
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
 }
 
 .mainContent {
