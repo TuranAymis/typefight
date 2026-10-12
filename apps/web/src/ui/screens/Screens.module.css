@@ -358,3 +358,38 @@
   font-weight: 700;
   background: var(--accent-cyan-dim);
 }
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 2rem;
+  font-family: var(--font-mono);
+}
+
+.statGrid dt {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.statGrid dd {
+  font-size: 1.75rem;
+  color: var(--accent-cyan);
+  margin: 0;
+}
+
+.recoveryBox {
+  max-width: 560px;
+  margin-bottom: 2rem;
+}
+
+.recoveryCode {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  letter-spacing: 0.1em;
+  color: var(--accent-amber);
+  user-select: all;
+}

@@ -1,8 +1,19 @@
 import { Hono } from 'hono';
 import { validateNickname } from '@typefight/texts';
 import { findPlayerByToken } from '../auth';
-import { randomId, randomToken, sha256Hex } from '../crypto';
-import { clientIpHash, tooManyNewPlayers } from '../rateLimit';
+import {
+  normalizeRecoveryCode,
+  randomId,
+  randomRecoveryCode,
+  randomToken,
+  sha256Hex,
+} from '../crypto';
+import {
+  clientIpHash,
+  recordRecoveryAttempt,
+  tooManyNewPlayers,
+  tooManyRecoveryAttempts,
+} from '../rateLimit';
 import type { AppContext } from '../types';
 
 export const player = new Hono<AppContext>();
@@ -62,4 +73,49 @@ player.patch('/nickname', async (context) => {
     .bind(check.nickname, current.id)
     .run();
   return context.json({ playerId: current.id, nickname: check.nickname });
+});
+
+/**
+ * POST /api/player/recovery-code: creates a new recovery code (replacing any older one). The code is
+ * returned once; only its hash is stored. Used to move the profile to another browser or device.
+ */
+player.post('/recovery-code', async (context) => {
+  const current = await findPlayerByToken(context);
+  if (!current) return context.json({ error: 'unauthorized' }, 401);
+  const code = randomRecoveryCode();
+  await context.env.DB.prepare('UPDATE players SET recovery_hash = ? WHERE id = ?')
+    .bind(await sha256Hex(normalizeRecoveryCode(code)), current.id)
+    .run();
+  return context.json({ recoveryCode: code });
+});
+
+/**
+ * POST /api/player/recover { code }: swaps a valid recovery code for a fresh device token. The old
+ * device token stops working and the code is consumed, so a leaked old code cannot be reused.
+ */
+player.post('/recover', async (context) => {
+  const body = (await context.req.json().catch(() => ({}))) as { code?: unknown };
+  const code = typeof body.code === 'string' ? normalizeRecoveryCode(body.code) : '';
+  const ipHash = await clientIpHash(context);
+  const now = context.get('now')();
+  if (await tooManyRecoveryAttempts(context.env.DB, now, ipHash)) {
+    return context.json({ error: 'rate_limited' }, 429, { 'Retry-After': '600' });
+  }
+  await recordRecoveryAttempt(context.env.DB, now, ipHash);
+  if (code.length !== 20) return context.json({ error: 'invalid_code' }, 400);
+
+  const found = await context.env.DB.prepare(
+    'SELECT id, nickname FROM players WHERE recovery_hash = ? AND is_bot = 0',
+  )
+    .bind(await sha256Hex(code))
+    .first<{ id: string; nickname: string }>();
+  if (!found) return context.json({ error: 'invalid_code' }, 404);
+
+  const deviceToken = randomToken();
+  await context.env.DB.prepare(
+    'UPDATE players SET token_hash = ?, recovery_hash = NULL WHERE id = ? AND recovery_hash = ?',
+  )
+    .bind(await sha256Hex(deviceToken), found.id, await sha256Hex(code))
+    .run();
+  return context.json({ playerId: found.id, nickname: found.nickname, deviceToken });
 });

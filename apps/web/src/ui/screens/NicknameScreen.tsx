@@ -3,17 +3,23 @@ import type { FormEvent } from 'react';
 import { NICKNAME_MAX_LENGTH } from '@typefight/texts';
 import { useAppStore } from '../../store';
 import { useIdentityStore } from '../../store/useIdentityStore';
-import { NICKNAME_MESSAGES } from './nicknameMessages';
+import { NICKNAME_MESSAGES, RECOVER_MESSAGES } from './nicknameMessages';
 import styles from './Screens.module.css';
 
 export const NicknameScreen = () => {
   const setScreen = useAppStore((state) => state.setScreen);
-  const { error, saving, chooseNickname } = useIdentityStore();
+  const { error, saving, chooseNickname, recoverWithCode, recoverError } = useIdentityStore();
   const [value, setValue] = useState('');
+  const [recoveryValue, setRecoveryValue] = useState('');
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (await chooseNickname(value)) setScreen('menu');
+  };
+
+  const onRecover = async (event: FormEvent) => {
+    event.preventDefault();
+    if (await recoverWithCode(recoveryValue)) setScreen('menu');
   };
 
   return (
@@ -60,6 +66,33 @@ export const NicknameScreen = () => {
             Back
           </button>
         </div>
+      </form>
+
+      <form className={styles.nicknameForm} onSubmit={(event) => void onRecover(event)}>
+        <label htmlFor="recovery-input" className={styles.cardDesc}>
+          Already have a profile? Enter your recovery code
+        </label>
+        <input
+          id="recovery-input"
+          className={styles.nicknameInput}
+          value={recoveryValue}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={recoverError !== null}
+          aria-describedby="recovery-error"
+          onChange={(event) => setRecoveryValue(event.target.value)}
+        />
+        <p id="recovery-error" role="alert" className={styles.nicknameError}>
+          {recoverError ? RECOVER_MESSAGES[recoverError] : ''}
+        </p>
+        <button
+          id="recovery-restore"
+          type="submit"
+          className={`${styles.button} ${styles.secondaryButton}`}
+          disabled={saving || recoveryValue.trim() === ''}
+        >
+          Restore Profile
+        </button>
       </form>
     </div>
   );

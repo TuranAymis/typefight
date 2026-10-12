@@ -18,11 +18,11 @@ test('nickname screen rejects bad and filtered names and accepts a valid one', a
 
   await page.locator('#nickname-input').fill('ab');
   await page.locator('#nickname-save').click();
-  await expect(page.getByRole('alert')).toContainText('at least');
+  await expect(page.locator('#nickname-error')).toContainText('at least');
 
   await page.locator('#nickname-input').fill('siktir');
   await page.locator('#nickname-save').click();
-  await expect(page.getByRole('alert')).toContainText('not allowed');
+  await expect(page.locator('#nickname-error')).toContainText('not allowed');
 
   await page.locator('#nickname-input').fill('Speedy_Fox');
   await page.locator('#nickname-save').click();

@@ -64,3 +64,33 @@ export const tooManyNewPlayers = async (
   );
   return created >= MAX_NEW_PLAYERS_PER_IP;
 };
+
+export const RECOVERY_WINDOW_MS = 10 * 60 * 1000;
+export const MAX_RECOVERY_ATTEMPTS_PER_IP = 10;
+
+export const tooManyRecoveryAttempts = async (
+  db: D1Database,
+  now: number,
+  ipHash: string | null,
+): Promise<boolean> => {
+  if (!ipHash) return false;
+  const attempts = await count(
+    db,
+    'SELECT COUNT(*) AS total FROM recovery_attempts WHERE ip_hash = ? AND attempted_at > ?',
+    ipHash,
+    now - RECOVERY_WINDOW_MS,
+  );
+  return attempts >= MAX_RECOVERY_ATTEMPTS_PER_IP;
+};
+
+export const recordRecoveryAttempt = async (
+  db: D1Database,
+  now: number,
+  ipHash: string | null,
+): Promise<void> => {
+  if (!ipHash) return;
+  await db
+    .prepare('INSERT INTO recovery_attempts (ip_hash, attempted_at) VALUES (?, ?)')
+    .bind(ipHash, now)
+    .run();
+};
