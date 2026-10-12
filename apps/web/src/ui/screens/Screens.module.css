@@ -329,3 +329,32 @@
   color: var(--accent-pink);
   font-size: 0.9rem;
 }
+
+.boardTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.boardTable {
+  width: 100%;
+  max-width: 560px;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  margin-bottom: 1.5rem;
+}
+
+.boardTable th,
+.boardTable td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--accent-cyan-dim);
+}
+
+.boardMe {
+  color: var(--accent-cyan);
+  font-weight: 700;
+  background: var(--accent-cyan-dim);
+}

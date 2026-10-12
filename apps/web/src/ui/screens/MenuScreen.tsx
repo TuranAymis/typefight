@@ -63,6 +63,23 @@ export const MenuScreen = () => {
 
         <div className={styles.card}>
           <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>Leaderboard</span>
+            <span className={styles.cardTag}>Rankings</span>
+          </div>
+          <p className={styles.cardDesc}>
+            Best verified runs, daily and all-time, English and Turkish.
+          </p>
+          <button
+            id="nav-to-leaderboard"
+            className={`${styles.button} ${styles.secondaryButton}`}
+            onClick={() => setScreen('leaderboard')}
+          >
+            View Leaderboard
+          </button>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Results</span>
             <span className={styles.cardTag}>Analytics</span>
           </div>
