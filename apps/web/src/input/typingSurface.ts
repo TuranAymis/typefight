@@ -2,6 +2,7 @@ import {
   createTypingState,
   typingReducer,
   type KeyEvent,
+  type Locale,
   type TypingState,
 } from '@typefight/engine';
 import { DEFAULT_PRACTICE_TEXT } from '../store/useTypingStore';
@@ -22,12 +23,23 @@ export interface SurfaceSnapshot {
   readonly warning: string | null;
 }
 
+/** Duel texts may contain Turkish letters the practice reducer does not know; they only use the typed buffer. */
+const stateFor = (text: string): TypingState => {
+  try {
+    return createTypingState(text);
+  } catch {
+    return createTypingState('');
+  }
+};
+
 export const createTypingSurface = (
   targetText = DEFAULT_PRACTICE_TEXT,
   schedule: (callback: FrameRequestCallback) => number = requestAnimationFrame,
   cancel: (id: number) => void = cancelAnimationFrame,
 ) => {
-  let typingState = createTypingState(targetText);
+  let typingState = stateFor(targetText);
+  let locale: Locale = 'en';
+  let surfaceElement: EventTarget | null = null;
   let typedBuffer = '';
   let events: KeyEvent[] = [];
   let isComposing = false;
@@ -44,9 +56,10 @@ export const createTypingSurface = (
   const invalidate = () => {
     if (frame === null) frame = schedule(publish);
   };
-  const connect = (element: EventTarget) => {
+  const attach = (element: EventTarget) => {
     input?.dispose();
     input = attachKeyboardInput(element, {
+      locale,
       onKey(entry) {
         events.push(entry);
         if (entry.key === 'Backspace') typedBuffer = typedBuffer.slice(0, -1);
@@ -63,9 +76,14 @@ export const createTypingSurface = (
         invalidate();
       },
     });
+  };
+  const connect = (element: EventTarget) => {
+    surfaceElement = element;
+    attach(element);
     return () => {
       input?.dispose();
       input = null;
+      surfaceElement = null;
     };
   };
   return {
@@ -77,9 +95,13 @@ export const createTypingSurface = (
         listeners.delete(listener);
       };
     },
-    reset(text = targetText) {
+    reset(text = targetText, nextLocale: Locale = locale) {
+      if (nextLocale !== locale) {
+        locale = nextLocale;
+        if (surfaceElement) attach(surfaceElement);
+      }
       input?.reset();
-      typingState = createTypingState(text);
+      typingState = stateFor(text);
       typedBuffer = '';
       events = [];
       warning = null;

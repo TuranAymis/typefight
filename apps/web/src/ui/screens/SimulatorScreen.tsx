@@ -1,4 +1,6 @@
 import { useAppStore } from '../../store';
+import { useRef } from 'react';
+import { useCenteredLine } from '../hooks/useCenteredLine';
 import { useTypingSurface } from '../hooks/useTypingSurface';
 import styles from './Screens.module.css';
 
@@ -14,6 +16,9 @@ export const SimulatorScreen = () => {
     erroredAtCurrentIndex,
     isComplete,
   } = typingState;
+
+  const windowRef = useRef<HTMLDivElement>(null);
+  useCenteredLine(windowRef, cursorIndex);
 
   const typedPart = targetText.slice(0, cursorIndex);
   const cursorChar = cursorIndex < targetText.length ? targetText[cursorIndex] : '';
@@ -36,23 +41,26 @@ export const SimulatorScreen = () => {
         aria-label="Yazma alanı"
       >
         {warning && <p role="alert">{warning}</p>}
-        <div className={styles.streamDisplay} id="typing-stream">
-          <span className={styles.charTyped} id="typed-part">
-            {typedPart}
-          </span>
-          {cursorChar !== '' && (
-            <span
-              id="cursor-char"
-              className={`${styles.charCursor} ${
-                erroredAtCurrentIndex ? styles.charCursorError : ''
-              }`}
-            >
-              {cursorChar === ' ' ? '␣' : cursorChar}
+        <div className={styles.textWindow} ref={windowRef} id="text-window">
+          <div className={styles.streamDisplay} id="typing-stream">
+            <span className={styles.charTyped} id="typed-part">
+              {typedPart}
             </span>
-          )}
-          <span className={styles.charRemaining} id="remaining-part">
-            {remainingPart}
-          </span>
+            {cursorChar !== '' && (
+              <span
+                id="cursor-char"
+                data-cursor
+                className={`${styles.charCursor} ${
+                  erroredAtCurrentIndex ? styles.charCursorError : ''
+                }`}
+              >
+                {cursorChar === ' ' ? '␣' : cursorChar}
+              </span>
+            )}
+            <span className={styles.charRemaining} id="remaining-part">
+              {remainingPart}
+            </span>
+          </div>
         </div>
 
         {erroredAtCurrentIndex && (

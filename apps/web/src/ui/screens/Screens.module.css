@@ -498,3 +498,23 @@
   font-size: 6rem;
   color: var(--accent-cyan);
 }
+
+/* Fixed three-line window; the cursor line is kept as the middle line (see useCenteredLine). */
+.textWindow {
+  --stream-line: calc(1.6rem * 1.8);
+  position: relative;
+  height: calc(var(--stream-line) * 3);
+  overflow: hidden;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .textWindow {
+    scroll-behavior: auto;
+  }
+}
+
+.charWrong {
+  color: var(--accent-pink);
+  text-decoration: underline;
+}

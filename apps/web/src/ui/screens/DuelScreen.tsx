@@ -12,6 +12,7 @@ import {
   liveDuel,
   trimEvents,
 } from '../../duel/duelLive';
+import { useCenteredLine } from '../hooks/useCenteredLine';
 import { useTypingSurface } from '../hooks/useTypingSurface';
 import styles from './Screens.module.css';
 
@@ -70,14 +71,17 @@ interface FightViewProps {
 
 /** The running duel. Mounted only for the fight so the typing surface binds to its own element. */
 const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
-  const { typingState, events, elementRef, reset } = useTypingSurface();
+  const { typedBuffer, events, elementRef, reset } = useTypingSurface();
+  const cursorIndex = typedBuffer.length;
   const [elapsed, setElapsed] = useState(0);
+  const windowRef = useRef<HTMLDivElement>(null);
+  useCenteredLine(windowRef, cursorIndex);
   const opponent = duel.opponent;
 
   // The clock starts together with a fresh typing record, so keystroke times and the ghost replay
   // share the same zero.
   useEffect(() => {
-    reset(duel.text);
+    reset(duel.text, duel.lang);
     const startedAt = performance.now();
     let frame = 0;
     const tick = () => {
@@ -118,10 +122,10 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
   // End conditions: knockout, text finished, or time up.
   useEffect(() => {
     if (live.koAt !== null) onFinish(duel, events, live.koAt);
-    else if (typingState.isComplete) {
+    else if (cursorIndex >= duel.text.length) {
       onFinish(duel, events, (events[events.length - 1]?.t ?? 0) + 1);
     } else if (elapsed >= DUEL_DURATION_MS) onFinish(duel, events, DUEL_DURATION_MS);
-  }, [duel, live, typingState.isComplete, elapsed, events, onFinish]);
+  }, [duel, live, cursorIndex, elapsed, events, onFinish]);
 
   const hp = live.hp;
   const remainingSeconds = Math.max(0, Math.ceil((DUEL_DURATION_MS - elapsed) / 1000));
@@ -170,21 +174,26 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
         role="textbox"
         aria-label="Duel typing area"
       >
-        <div className={styles.streamDisplay} id="duel-stream">
-          {chars.map((char, index) => (
-            <span
-              key={index}
-              className={[
-                index < typingState.cursorIndex ? styles.charTyped : styles.charRemaining,
-                index === typingState.cursorIndex
-                  ? `${styles.charCursor} ${typingState.erroredAtCurrentIndex ? styles.charCursorError : ''}`
-                  : '',
-                index === ghostAt.cursor ? styles.ghostMark : '',
-              ].join(' ')}
-            >
-              {char}
-            </span>
-          ))}
+        <div className={styles.textWindow} ref={windowRef} id="duel-window">
+          <div className={styles.streamDisplay} id="duel-stream">
+            {chars.map((char, index) => (
+              <span
+                key={index}
+                data-cursor={index === cursorIndex ? '' : undefined}
+                className={[
+                  index >= cursorIndex
+                    ? styles.charRemaining
+                    : typedBuffer[index] === char
+                      ? styles.charTyped
+                      : styles.charWrong,
+                  index === cursorIndex ? styles.charCursor : '',
+                  index === ghostAt.cursor ? styles.ghostMark : '',
+                ].join(' ')}
+              >
+                {char}
+              </span>
+            ))}
+          </div>
         </div>
         <div className={styles.ghostTrack} aria-hidden="true">
           <div
