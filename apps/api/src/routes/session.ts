@@ -2,8 +2,10 @@ import { Hono } from 'hono';
 import { computeResult, RECORD_VERSION } from '@typefight/engine';
 import type { KeyEvent, SessionRecord } from '@typefight/engine';
 import { pickPassage } from '@typefight/texts';
+import { isHistoricalJump, rhythmFlags } from '../antiCheat';
 import { findPlayerByToken } from '../auth';
 import { randomId, randomSeed, randomToken, sha256Hex } from '../crypto';
+import { clientIpHash, tooManySessionStarts } from '../rateLimit';
 import type { AppContext } from '../types';
 
 export const session = new Hono<AppContext>();
@@ -39,13 +41,19 @@ session.post('/start', async (context) => {
   }
   if (lang !== 'en' && lang !== 'tr') return context.json({ error: 'invalid_lang' }, 400);
 
+  const now = context.get('now')();
+  const ipHash = await clientIpHash(context);
+  if (await tooManySessionStarts(context.env.DB, now, current.id, ipHash)) {
+    return context.json({ error: 'rate_limited' }, 429, { 'Retry-After': '600' });
+  }
+
   const seed = randomSeed();
   const passage = pickPassage(lang, seed);
   const id = randomId();
   const sessionToken = randomToken();
   await context.env.DB.prepare(
-    `INSERT INTO sessions (id, player_id, mode, lang, text_id, target_text, seed, token_hash, started_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO sessions (id, player_id, mode, lang, text_id, target_text, seed, token_hash, started_at, ip_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -56,7 +64,8 @@ session.post('/start', async (context) => {
       passage.text,
       seed,
       await sha256Hex(sessionToken),
-      context.get('now')(),
+      now,
+      ipHash,
     )
     .run();
   return context.json(
@@ -138,10 +147,27 @@ session.post('/submit', async (context) => {
   };
   const result = computeResult(record);
 
+  // Suspicious runs are stored but unverified: out of ghost/leaderboard pools, player not blocked.
+  const flags: string[] = rhythmFlags(events, result);
+  const history = await context.env.DB.prepare(
+    `SELECT wpm FROM sessions WHERE player_id = ? AND status = 'submitted' AND verified = 1
+     ORDER BY submitted_at DESC LIMIT 20`,
+  )
+    .bind(current.id)
+    .all<{ wpm: number }>();
+  if (
+    isHistoricalJump(
+      result.wpm,
+      history.results.map((row) => row.wpm),
+    )
+  )
+    flags.push('wpm_jump');
+  const verified = flags.length === 0;
+
   // Guarded by status so a double submit cannot record twice.
   const update = await context.env.DB.prepare(
     `UPDATE sessions SET status = 'submitted', submitted_at = ?, duration_ms = ?, wpm = ?, raw_wpm = ?,
-       accuracy = ?, consistency = ?, record_json = ? WHERE id = ? AND status = 'started'`,
+       accuracy = ?, consistency = ?, record_json = ?, verified = ?, flags = ? WHERE id = ? AND status = 'started'`,
   )
     .bind(
       now,
@@ -151,9 +177,12 @@ session.post('/submit', async (context) => {
       result.accuracy,
       result.consistency,
       JSON.stringify(record),
+      verified ? 1 : 0,
+      flags.length > 0 ? flags.join(',') : null,
       row.id,
     )
     .run();
   if (update.meta.changes === 0) return context.json({ error: 'already_submitted' }, 409);
-  return context.json({ sessionId: row.id, result });
+  // Flags stay server-side so cheaters cannot tune against them.
+  return context.json({ sessionId: row.id, result, verified });
 });

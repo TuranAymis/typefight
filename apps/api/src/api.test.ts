@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from './index';
 import { DURATION_TOLERANCE_MS, SESSION_TTL_MS } from './routes/session';
+import { humanEvents } from './antiCheat.test';
+import { MAX_NEW_PLAYERS_PER_IP, MAX_STARTS_PER_PLAYER, START_WINDOW_MS } from './rateLimit';
 import { createTestDb, type TestDb } from './test/d1';
 
 let db: TestDb;
@@ -10,10 +12,11 @@ const app = createApp(() => now);
 const call = async (
   method: string,
   path: string,
-  options: { token?: string; body?: unknown } = {},
+  options: { token?: string; body?: unknown; ip?: string } = {},
 ): Promise<{ status: number; json: Record<string, unknown> }> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
+  if (options.ip) headers['CF-Connecting-IP'] = options.ip;
   const init: RequestInit = { method, headers };
   if (options.body !== undefined) init.body = JSON.stringify(options.body);
   const response = await app.request(path, init, { DB: db.d1 });
@@ -316,5 +319,165 @@ describe('schema', () => {
         .prepare("INSERT INTO badges (player_id, badge_id, earned_at) VALUES ('nobody', 'b', 0)")
         .run(),
     ).toThrow();
+  });
+});
+
+describe('anti-abuse', () => {
+  const start = async (token: string, ip?: string) =>
+    call('POST', '/api/session/start', {
+      token,
+      body: { lang: 'en' },
+      ...(ip ? { ip } : {}),
+    });
+
+  it('rate limits session starts per player and tells the client when to retry', async () => {
+    const token = (await createPlayer()).json.deviceToken as string;
+    for (let i = 0; i < MAX_STARTS_PER_PLAYER; i += 1) {
+      expect((await start(token)).status).toBe(201);
+    }
+    expect((await start(token)).status).toBe(429);
+    now += START_WINDOW_MS + 1;
+    expect((await start(token)).status).toBe(201);
+  });
+
+  it('rate limits session starts per IP across different players', async () => {
+    const ip = '203.0.113.7';
+    const players: string[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      players.push(
+        (await call('POST', '/api/player', { body: {}, ip })).json.deviceToken as string,
+      );
+    }
+    let status = 201;
+    for (let i = 0; i < 61 && status === 201; i += 1) {
+      status = (await start(players[i % 3] as string, ip)).status;
+    }
+    expect(status).toBe(429);
+    // A fresh player on the same IP is blocked too; the same IP limit does not hit other IPs.
+    const fresh = (await call('POST', '/api/player', { body: {}, ip: '198.51.100.9' })).json
+      .deviceToken as string;
+    expect((await start(fresh, ip)).status).toBe(429);
+    expect((await start(fresh, '198.51.100.9')).status).toBe(201);
+  });
+
+  it('limits account creation per IP and never stores the raw IP', async () => {
+    const ip = '203.0.113.50';
+    for (let i = 0; i < MAX_NEW_PLAYERS_PER_IP; i += 1) {
+      expect((await call('POST', '/api/player', { body: {}, ip })).status).toBe(201);
+    }
+    const blocked = await call('POST', '/api/player', { body: {}, ip });
+    expect(blocked.status).toBe(429);
+    expect(blocked.json.error).toBe('rate_limited');
+    const rows = db.raw.prepare('SELECT ip_hash FROM players').all() as { ip_hash: string }[];
+    expect(rows.every((row) => row.ip_hash !== null && !row.ip_hash.includes('203'))).toBe(true);
+  });
+
+  const submitWith = async (events: { t: number; key: string }[]) => {
+    const created = await createPlayer();
+    const token = created.json.deviceToken as string;
+    const started = await start(token);
+    now += 120_000;
+    return call('POST', '/api/session/submit', {
+      token,
+      body: {
+        sessionId: started.json.sessionId,
+        sessionToken: started.json.sessionToken,
+        events,
+        durationMs: (events[events.length - 1]?.t ?? 0) + 50,
+      },
+    });
+  };
+
+  it('marks automated-looking runs unverified without blocking the player', async () => {
+    const robot = Array.from({ length: 80 }, (_, index) => ({ t: 100 + index * 100, key: 'a' }));
+    const response = await submitWith(robot);
+    expect(response.status).toBe(200);
+    expect(response.json.verified).toBe(false);
+    expect(response.json.flags).toBeUndefined();
+    expect(db.raw.prepare('SELECT verified, flags FROM sessions').get()).toMatchObject({
+      verified: 0,
+      flags: 'too_regular',
+    });
+  });
+
+  it('keeps human-like runs verified', async () => {
+    const response = await submitWith(humanEvents(80));
+    expect(response.status).toBe(200);
+    expect(response.json.verified).toBe(true);
+  });
+
+  it('flags a sudden jump over the player history and keeps it out of profile bests', async () => {
+    const created = await createPlayer('Climber');
+    const token = created.json.deviceToken as string;
+    const playerId = created.json.playerId as string;
+    const insert = db.raw.prepare(
+      `INSERT INTO sessions (id, player_id, mode, lang, text_id, target_text, seed, token_hash, status, started_at, submitted_at, wpm, accuracy, verified)
+       VALUES (?, ?, 'simulator', 'en', 'en-001', 'x', 1, 'h', 'submitted', 0, ?, ?, 98, 1)`,
+    );
+    insert.run('h1', playerId, 1, 40);
+    insert.run('h2', playerId, 2, 42);
+    insert.run('h3', playerId, 3, 41);
+
+    const started = await start(token);
+    now += 120_000;
+    const text = started.json.text as string;
+    // Fast but human-like typing of the whole text: far above the 40 WPM history.
+    const events = [...text].map((key, index) => ({
+      t: 20 + index * 40 + ((index * 7) % 13),
+      key,
+    }));
+    const response = await call('POST', '/api/session/submit', {
+      token,
+      body: {
+        sessionId: started.json.sessionId,
+        sessionToken: started.json.sessionToken,
+        events,
+        durationMs: (events[events.length - 1]?.t ?? 0) + 20,
+      },
+    });
+    expect(response.status).toBe(200);
+    expect(response.json.verified).toBe(false);
+    const row = db.raw.prepare("SELECT flags FROM sessions WHERE id != 'h1' AND wpm > 100").get();
+    expect(row).toMatchObject({ flags: expect.stringContaining('wpm_jump') });
+
+    const profile = await call('GET', `/api/profile/${playerId}`);
+    expect(profile.json.bestWpm).toBe(42);
+    expect(profile.json.sessions).toBe(4);
+  });
+
+  it('only verified sessions are visible to the ghost index', () => {
+    const plan = db.raw
+      .prepare(
+        "EXPLAIN QUERY PLAN SELECT id FROM sessions WHERE mode = 'simulator' AND lang = 'en' AND status = 'submitted' AND verified = 1 AND wpm BETWEEN 40 AND 60",
+      )
+      .all() as { detail: string }[];
+    expect(plan.map((row) => row.detail).join(' ')).toContain('idx_sessions_ghost');
+  });
+});
+
+describe('session token lifecycle', () => {
+  it('rejects a token after expiry and after first use', async () => {
+    const token = (await createPlayer()).json.deviceToken as string;
+    const first = await call('POST', '/api/session/start', { token, body: {} });
+    const body = {
+      sessionId: first.json.sessionId,
+      sessionToken: first.json.sessionToken,
+      events: humanEvents(5),
+      durationMs: 800,
+    };
+    now += 5_000;
+    expect((await call('POST', '/api/session/submit', { token, body })).status).toBe(200);
+    expect((await call('POST', '/api/session/submit', { token, body })).status).toBe(409);
+
+    const second = await call('POST', '/api/session/start', { token, body: {} });
+    now += SESSION_TTL_MS + 1;
+    const late = await call('POST', '/api/session/submit', {
+      token,
+      body: { ...body, sessionId: second.json.sessionId, sessionToken: second.json.sessionToken },
+    });
+    expect(late.status).toBe(410);
+    expect(
+      db.raw.prepare("SELECT COUNT(*) AS n FROM sessions WHERE status = 'submitted'").get(),
+    ).toEqual({ n: 1 });
   });
 });
