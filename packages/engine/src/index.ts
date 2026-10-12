@@ -28,6 +28,8 @@ export type {
 } from './glitch/placement';
 export { DEFAULT_GLITCH_RULES, glitchFiresBetween, recordGlitchFires } from './glitch/fires';
 export type { GlitchFire, GlitchOutcome, GlitchRules } from './glitch/fires';
+export { INITIAL_RATING, K_FACTOR, MIN_RATING, expectedScore, updateRatings } from './rating/elo';
+export type { DuelScore, RatingUpdate } from './rating/elo';
 export { normalizeTypedText, isTypableChar } from './text/locale';
 export type { Locale } from './text/locale';
 
