@@ -1,3 +1,4 @@
+import type { Locale } from '@typefight/engine';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createTypingSurface } from '../../input/typingSurface';
 
@@ -20,8 +21,8 @@ export const useTypingSurface = () => {
   return {
     ...snapshot,
     elementRef,
-    reset: (text?: string) => {
-      current.reset(text);
+    reset: (text?: string, locale?: Locale) => {
+      current.reset(text, locale);
       elementRef.current?.focus();
     },
   };

@@ -146,3 +146,85 @@ test('duel shows an error with retry when the server is down', async ({ page }) 
   await page.locator('#duel-retry').click();
   await expect(page.locator('#duel-opponent-name')).toHaveText('Rival');
 });
+
+test('duel accepts Turkish letters and records typo corrections as Backspace', async ({ page }) => {
+  const turkish = 'şu güzel çocuk ığ';
+  await page.route('**/api/player', async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        created: true,
+        playerId: 'p1',
+        nickname: 'Ada',
+        deviceToken: 'a'.repeat(64),
+      }),
+    });
+  });
+  await page.route('**/api/duel/start', async (route) => {
+    const body = startBody(true);
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...body,
+        lang: 'tr',
+        text: turkish,
+        opponent: {
+          ...body.opponent,
+          record: { ...ghostRecord(500), targetText: turkish, locale: 'tr' },
+        },
+      }),
+    });
+  });
+  let submitted: { events: { key: string }[] } | undefined;
+  await page.route('**/api/duel/submit', async (route) => {
+    submitted = route.request().postDataJSON() as typeof submitted;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        verified: true,
+        result: { wpm: 40, accuracy: 94 },
+        duel: {
+          winner: 'draw',
+          reason: 'draw',
+          hp: { a: 100, b: 100 },
+          endedAt: 60000,
+          rating: { before: 1000, after: 1000, delta: 0 },
+          ratingApplied: true,
+        },
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await page.locator('#nav-to-nickname').click();
+  await page.locator('#nickname-input').fill('Ada');
+  await page.locator('#nickname-save').click();
+  await page.locator('#nav-to-duel').click();
+  await page.locator('#duel-lang-tr').click();
+  await page.locator('#duel-find').click();
+  await expect(page.locator('#duel-hud')).toBeVisible({ timeout: 8000 });
+
+  await page.locator('[role=textbox]').focus();
+  // Playwright cannot press non-US letters, so dispatch real keydown events on the typing area.
+  const press = async (keys: string[]) => {
+    for (const key of keys) {
+      await page.locator('[role=textbox]').evaluate((element, value) => {
+        element.dispatchEvent(
+          new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true }),
+        );
+      }, key);
+      await page.waitForTimeout(25);
+    }
+  };
+  await press([...'şu g']);
+  await press(['x', 'Backspace']);
+  await press([...'üzel çocuk ığ']);
+
+  await expect(page.locator('#duel-result-title')).toHaveText('Draw');
+  const keys = submitted?.events.map((event) => event.key) ?? [];
+  expect(keys).toContain('Backspace');
+  expect(keys.filter((key) => key !== 'Backspace' && key !== 'x').join('')).toBe(turkish);
+});
