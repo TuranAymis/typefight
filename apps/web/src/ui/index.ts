@@ -4,3 +4,5 @@ export { SimulatorScreen } from './screens/SimulatorScreen';
 export { GauntletScreen } from './screens/GauntletScreen';
 export { ResultsScreen } from './screens/ResultsScreen';
 export { useTypingBridge } from './hooks/useTypingBridge';
+export { useReducedMotion } from './hooks/useReducedMotion';
+export * from './components';

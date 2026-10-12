@@ -1,9 +1,9 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createTypingSurface } from '../../input/typingSurface';
 
-export const useTypingSurface = () => {
+export const useTypingSurface = (targetText?: string) => {
   const surface = useRef<ReturnType<typeof createTypingSurface> | null>(null);
-  if (surface.current === null) surface.current = createTypingSurface();
+  if (surface.current === null) surface.current = createTypingSurface(targetText);
   const current = surface.current;
   const snapshot = useSyncExternalStore(current.subscribe, current.getSnapshot);
   const elementRef = useRef<HTMLDivElement>(null);

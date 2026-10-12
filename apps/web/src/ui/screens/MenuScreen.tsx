@@ -1,4 +1,5 @@
 import { useAppStore } from '../../store';
+import { Button, Panel } from '../components';
 import styles from './Screens.module.css';
 
 export const MenuScreen = () => {
@@ -13,7 +14,7 @@ export const MenuScreen = () => {
       </p>
 
       <div className={styles.cardGrid}>
-        <div className={styles.card}>
+        <Panel className={styles.card}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Simulator</span>
             <span className={styles.cardTag}>Training</span>
@@ -21,16 +22,12 @@ export const MenuScreen = () => {
           <p className={styles.cardDesc}>
             Warm-up and skill progression. Endless single-line word stream with blocking input.
           </p>
-          <button
-            id="nav-to-simulator"
-            className={`${styles.button} ${styles.primaryButton}`}
-            onClick={() => setScreen('simulator')}
-          >
+          <Button id="nav-to-simulator" onClick={() => setScreen('simulator')}>
             Launch Simulator
-          </button>
-        </div>
+          </Button>
+        </Panel>
 
-        <div className={styles.card}>
+        <Panel className={styles.card}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Gauntlet</span>
             <span className={styles.cardTag}>RPG Campaign</span>
@@ -38,16 +35,12 @@ export const MenuScreen = () => {
           <p className={styles.cardDesc}>
             Wave defense battle against descending words with target-locking mechanics.
           </p>
-          <button
-            id="nav-to-gauntlet"
-            className={`${styles.button} ${styles.primaryButton}`}
-            onClick={() => setScreen('gauntlet')}
-          >
+          <Button id="nav-to-gauntlet" onClick={() => setScreen('gauntlet')}>
             Enter Gauntlet
-          </button>
-        </div>
+          </Button>
+        </Panel>
 
-        <div className={styles.card}>
+        <Panel className={styles.card}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Results</span>
             <span className={styles.cardTag}>Analytics</span>
@@ -55,14 +48,10 @@ export const MenuScreen = () => {
           <p className={styles.cardDesc}>
             View session performance metrics, WPM, accuracy, and composite scores.
           </p>
-          <button
-            id="nav-to-results"
-            className={`${styles.button} ${styles.secondaryButton}`}
-            onClick={() => setScreen('results')}
-          >
+          <Button id="nav-to-results" variant="secondary" onClick={() => setScreen('results')}>
             View Results
-          </button>
-        </div>
+          </Button>
+        </Panel>
       </div>
     </div>
   );

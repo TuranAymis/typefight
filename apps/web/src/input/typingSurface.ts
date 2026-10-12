@@ -18,6 +18,7 @@ export interface SurfaceSnapshot {
   readonly typingState: TypingState;
   readonly typedBuffer: string;
   readonly events: readonly KeyEvent[];
+  readonly startedAtMs: number | null;
   readonly isComposing: boolean;
   readonly warning: string | null;
 }
@@ -32,13 +33,22 @@ export const createTypingSurface = (
   let events: KeyEvent[] = [];
   let isComposing = false;
   let warning: string | null = null;
-  let snapshot: SurfaceSnapshot = { typingState, typedBuffer, events, isComposing, warning };
+  let firstKeyAt: number | null = null;
+  let startedAtMs: number | null = null;
+  let snapshot: SurfaceSnapshot = {
+    typingState,
+    typedBuffer,
+    events,
+    startedAtMs,
+    isComposing,
+    warning,
+  };
   let frame: number | null = null;
   let input: KeyboardInput | null = null;
   const listeners = new Set<() => void>();
   const publish = () => {
     frame = null;
-    snapshot = { typingState, typedBuffer, events: [...events], isComposing, warning };
+    snapshot = { typingState, typedBuffer, events: [...events], startedAtMs, isComposing, warning };
     listeners.forEach((listener) => listener());
   };
   const invalidate = () => {
@@ -48,10 +58,15 @@ export const createTypingSurface = (
     input?.dispose();
     input = attachKeyboardInput(element, {
       onKey(entry) {
-        events.push(entry);
-        if (entry.key === 'Backspace') typedBuffer = typedBuffer.slice(0, -1);
-        else typedBuffer += entry.key;
-        typingState = typingReducer(typingState, { key: entry.key, timestamp: entry.t });
+        if (entry.key === 'Backspace') return;
+        if (firstKeyAt === null) {
+          firstKeyAt = entry.t;
+          startedAtMs = performance.now();
+        }
+        const relative = { ...entry, t: entry.t - firstKeyAt };
+        events.push(relative);
+        typedBuffer += entry.key;
+        typingState = typingReducer(typingState, { key: entry.key, timestamp: relative.t });
         invalidate();
       },
       onWarning(reason) {
@@ -82,6 +97,8 @@ export const createTypingSurface = (
       typingState = createTypingState(text);
       typedBuffer = '';
       events = [];
+      firstKeyAt = null;
+      startedAtMs = null;
       warning = null;
       if (frame !== null) {
         cancel(frame);
