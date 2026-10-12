@@ -518,3 +518,32 @@
   color: var(--accent-pink);
   text-decoration: underline;
 }
+
+.badgeGrid {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.badgeGrid li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--accent-cyan-dim);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.badgeOwned {
+  border-color: var(--accent-amber) !important;
+  color: var(--accent-amber);
+}
+
+.badgeLocked {
+  opacity: 0.5;
+}

@@ -3,6 +3,7 @@ import { simulateDuel, updateRatings } from '@typefight/engine';
 import type { SessionRecord } from '@typefight/engine';
 import { pickPassage, TEXT_POOL } from '@typefight/texts';
 import { findPlayerByToken } from '../auth';
+import { awardBadges } from '../badges';
 import { randomId, randomSeed } from '../crypto';
 import { findOpponent, findOpponentBySession } from '../matchmaking';
 import { finishSession, isFailure, isLang, startSession } from '../sessionService';
@@ -148,10 +149,16 @@ duel.post('/submit', async (context) => {
     )
     .run();
 
+  // Only verified runs count towards badges.
+  const newBadges = finished.verified
+    ? await awardBadges(db, current.id, context.get('now')())
+    : [];
+
   return context.json({
     sessionId: finished.row.id,
     result: finished.result,
     verified: finished.verified,
+    newBadges,
     duel: {
       winner,
       reason: outcome.reason,

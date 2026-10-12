@@ -7,3 +7,5 @@ export {
   validateNickname,
 } from './nickname';
 export type { NicknameCheck, NicknameError } from './nickname';
+export { BADGES, BADGE_MIN_ACCURACY_RUN_MS } from './badges';
+export type { BadgeDefinition } from './badges';

@@ -31,6 +31,7 @@ test('profile shows stats, creates a recovery code and restores it on a fresh br
         bestWpm: 88,
         averageAccuracy: 96.5,
         duels: { played: 4, won: 3, lost: 1, drawn: 0 },
+        badges: [{ id: 'first-duel', earnedAt: 1 }],
       }),
     });
   });
@@ -55,6 +56,10 @@ test('profile shows stats, creates a recovery code and restores it on a fresh br
   await expect(page.locator('#stat-accuracy')).toHaveText('96.5%');
   await expect(page.locator('#stat-win-rate')).toHaveText('75%');
   await expect(page.locator('#stat-duels')).toHaveText('4');
+
+  await expect(page.locator('#badge-list li')).toHaveCount(10);
+  await expect(page.locator('[data-badge=first-duel]')).toHaveAttribute('data-earned', 'true');
+  await expect(page.locator('[data-badge=wins-50]')).toHaveAttribute('data-earned', 'false');
 
   await page.locator('#recovery-generate').click();
   await expect(page.locator('#recovery-code')).toHaveText('ABCDE-FGHJK-MNPQR-STUVW');
