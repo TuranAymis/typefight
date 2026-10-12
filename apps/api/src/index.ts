@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { duel } from './routes/duel';
 import { player } from './routes/player';
 import { profile } from './routes/profile';
 import { session } from './routes/session';
@@ -26,6 +27,7 @@ export const createApp = (clock: () => number = Date.now): Hono<AppContext> => {
 
   app.route('/api/player', player);
   app.route('/api/session', session);
+  app.route('/api/duel', duel);
   app.route('/api/profile', profile);
 
   return app;
