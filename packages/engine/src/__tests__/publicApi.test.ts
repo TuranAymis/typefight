@@ -8,7 +8,10 @@ it('exports only the named public runtime API', async () => {
       "DEFAULT_GLITCH_RULES",
       "ENGINE_INFO",
       "GLITCH_POOL",
+      "INITIAL_RATING",
+      "K_FACTOR",
       "MAX_COMBO_BONUS",
+      "MIN_RATING",
       "RECORD_VERSION",
       "STAGGER_MS",
       "applyGlitches",
@@ -17,6 +20,7 @@ it('exports only the named public runtime API', async () => {
       "computeResult",
       "createRng",
       "createTypingState",
+      "expectedScore",
       "glitchFiresBetween",
       "isTypableChar",
       "isValidKey",
@@ -25,6 +29,7 @@ it('exports only the named public runtime API', async () => {
       "recordGlitchFires",
       "simulateDuel",
       "typingReducer",
+      "updateRatings",
     ]
   `);
 });
