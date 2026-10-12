@@ -5,8 +5,11 @@ import { indexedDbIdentityStorage } from '../identity/identityStorage';
 import type { IdentityStorage } from '../identity/identityStorage';
 import { registerPlayer } from '../identity/playerApi';
 import type { PlayerIdentity, RegisterResult } from '../identity/playerApi';
+import { recoverProfile } from '../profile/profileApi';
+import type { RecoverResult } from '../profile/profileApi';
 
 export type IdentityError = NicknameError | 'network' | 'server' | 'storage';
+export type RecoverError = 'invalid_code' | 'rate_limited' | 'network' | 'server' | 'storage';
 
 export interface IdentityState {
   status: 'unknown' | 'anonymous' | 'ready';
@@ -14,12 +17,15 @@ export interface IdentityState {
   error: IdentityError | null;
   saving: boolean;
   restore: () => Promise<void>;
+  recoverError: RecoverError | null;
   chooseNickname: (nickname: string) => Promise<boolean>;
+  recoverWithCode: (code: string) => Promise<boolean>;
 }
 
 export interface IdentityDeps {
   storage: IdentityStorage;
   register: (nickname: string) => Promise<RegisterResult>;
+  recover?: (code: string) => Promise<RecoverResult>;
 }
 
 /** Factory with injectable dependencies so the flow can be tested without a browser or server. */
@@ -29,6 +35,7 @@ export const createIdentityStore = (deps: IdentityDeps) =>
     identity: null,
     error: null,
     saving: false,
+    recoverError: null,
     restore: async () => {
       const stored = await deps.storage.load();
       set(stored ? { status: 'ready', identity: stored } : { status: 'anonymous' });
@@ -53,6 +60,22 @@ export const createIdentityStore = (deps: IdentityDeps) =>
         return false;
       }
       set({ saving: false, status: 'ready', identity: result.identity, error: null });
+      return true;
+    },
+    recoverWithCode: async (code) => {
+      set({ saving: true, recoverError: null });
+      const result = await (deps.recover ?? recoverProfile)(code);
+      if (!result.ok) {
+        set({ saving: false, recoverError: result.error });
+        return false;
+      }
+      try {
+        await deps.storage.save(result.identity);
+      } catch {
+        set({ saving: false, recoverError: 'storage' });
+        return false;
+      }
+      set({ saving: false, status: 'ready', identity: result.identity, recoverError: null });
       return true;
     },
   }));

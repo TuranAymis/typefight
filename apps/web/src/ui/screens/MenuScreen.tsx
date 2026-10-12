@@ -15,6 +15,15 @@ export const MenuScreen = () => {
 
       <p className={styles.cardDesc} id="player-line">
         {identity ? `Playing as ${identity.nickname}` : 'No nickname yet.'}{' '}
+        {identity && (
+          <button
+            id="nav-to-profile"
+            className={`${styles.button} ${styles.secondaryButton}`}
+            onClick={() => setScreen('profile')}
+          >
+            Profile
+          </button>
+        )}
         {!identity && (
           <button
             id="nav-to-nickname"

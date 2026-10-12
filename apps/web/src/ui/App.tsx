@@ -6,6 +6,7 @@ import { GauntletScreen } from './screens/GauntletScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { NicknameScreen } from './screens/NicknameScreen';
 import { LeaderboardScreen } from './screens/LeaderboardScreen';
+import { ProfileScreen } from './screens/ProfileScreen';
 import styles from './App.module.css';
 
 export const App = () => {
@@ -42,6 +43,7 @@ export const App = () => {
         {currentScreen === 'results' && <ResultsScreen />}
         {currentScreen === 'nickname' && <NicknameScreen />}
         {currentScreen === 'leaderboard' && <LeaderboardScreen />}
+        {currentScreen === 'profile' && <ProfileScreen />}
       </main>
     </div>
   );
