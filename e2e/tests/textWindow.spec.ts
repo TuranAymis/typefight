@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDuel } from './support/navigation';
 
 // One-letter words keep the damage low so the opponent is not knocked out while we scroll.
 const LONG_TEXT = Array.from({ length: 100 }, (_, i) => 'abcdefghijklmnopqrstuvwxyz'[i % 26]).join(
@@ -57,7 +58,7 @@ test('the text shows as a three-line window that follows the cursor on a phone',
   await page.locator('#nav-to-nickname').click();
   await page.locator('#nickname-input').fill('Ada');
   await page.locator('#nickname-save').click();
-  await page.locator('#nav-to-duel').click();
+  await openDuel(page);
   await page.locator('#duel-find').click();
   await expect(page.locator('#duel-window')).toBeVisible({ timeout: 8000 });
 

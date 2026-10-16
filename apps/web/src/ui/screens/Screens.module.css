@@ -547,3 +547,113 @@
 .badgeLocked {
   opacity: 0.5;
 }
+
+/* Cosmetics only paint inside/around the existing cursor box; text metrics stay fixed. */
+.typingContainer[data-cursor-effect] .charCursor {
+  position: relative;
+}
+
+.typingContainer[data-cursor-effect='pulse'] .charCursor {
+  color: #e5fcff;
+  background: #16343e;
+  box-shadow: inset 0 -3px #83eaff;
+  animation: none;
+}
+
+.typingContainer[data-cursor-effect='neon-trail'] .charCursor {
+  color: #08251d;
+  background: #a1ffda;
+  box-shadow:
+    -5px 0 0 #a1ffda33,
+    -10px 0 0 #a1ffda14;
+  animation: none;
+}
+
+.typingContainer[data-cursor-effect='ember'] .charCursor {
+  color: #fff1d6;
+  background: #442b1c;
+  box-shadow: inset 0 -3px #ffc477;
+  animation: none;
+}
+
+.typingContainer[data-cursor-effect='pulse'] .charCursor::after,
+.typingContainer[data-cursor-effect='ember'] .charCursor::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  inset: auto 0 0;
+  height: 3px;
+  background: #83eaff;
+  box-shadow: 0 1px 7px #83eaff;
+  animation: underline-pulse 1.8s ease-in-out infinite alternate;
+}
+
+.typingContainer[data-cursor-effect='ember'] .charCursor::after {
+  background: linear-gradient(90deg, #ffc477, #fff1d6, #ff9d55);
+  box-shadow: 0 -2px 6px #ff9d5588;
+  animation: ember-drift 2s ease-in-out infinite alternate;
+}
+
+@keyframes underline-pulse {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ember-drift {
+  from {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typingContainer[data-cursor-effect] .charCursor,
+  .typingContainer[data-cursor-effect] .charCursor::after {
+    animation: none;
+  }
+}
+
+.cursor-effects {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.effect-option {
+  display: grid;
+  gap: 0.6rem;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  text-align: left;
+  font: inherit;
+  color: var(--text-primary);
+  background: #141c2b;
+  border: 1px solid #62738b;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.effect-option[aria-pressed='true'] {
+  border-color: var(--accent-cyan);
+  box-shadow: inset 0 0 0 1px var(--accent-cyan);
+}
+
+.effect-option:disabled {
+  cursor: not-allowed;
+  color: #acb8ca;
+}
+.effect-option:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}

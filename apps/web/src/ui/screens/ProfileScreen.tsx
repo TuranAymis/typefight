@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { BADGES } from '@typefight/texts';
+import { BADGES, CURSOR_EFFECTS } from '@typefight/texts';
 import { useAppStore, useIdentityStore } from '../../store';
-import { createRecoveryCode, fetchProfile, winRate } from '../../profile/profileApi';
+import {
+  createRecoveryCode,
+  fetchProfile,
+  setCursorEffect,
+  winRate,
+} from '../../profile/profileApi';
 import type { Profile } from '../../profile/profileApi';
 import styles from './Screens.module.css';
 
@@ -13,6 +18,9 @@ type LoadState =
 export const ProfileScreen = () => {
   const setScreen = useAppStore((state) => state.setScreen);
   const identity = useIdentityStore((state) => state.identity);
+  const applyProfile = useIdentityStore((state) => state.applyProfile);
+  const [savingEffect, setSavingEffect] = useState(false);
+  const [effectError, setEffectError] = useState(false);
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [code, setCode] = useState<string | null>(null);
@@ -25,13 +33,28 @@ export const ProfileScreen = () => {
     let cancelled = false;
     setState({ status: 'loading' });
     void fetchProfile(playerId).then((result) => {
-      if (!cancelled)
+      if (!cancelled) {
+        if (result.ok) applyProfile(result.profile);
         setState(result.ok ? { status: 'ready', profile: result.profile } : { status: 'error' });
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [playerId, attempt]);
+  }, [playerId, attempt, applyProfile]);
+
+  const selectEffect = async (effectId: string) => {
+    if (!token || state.status !== 'ready' || savingEffect) return;
+    setSavingEffect(true);
+    setEffectError(false);
+    const result = await setCursorEffect(token, effectId);
+    if (result.ok) {
+      const profile = { ...state.profile, cursorEffect: result.effectId };
+      applyProfile(profile);
+      setState({ status: 'ready', profile });
+    } else setEffectError(true);
+    setSavingEffect(false);
+  };
 
   const generate = async () => {
     if (!token) return;
@@ -120,6 +143,50 @@ export const ProfileScreen = () => {
               );
             })}
           </ul>
+        </section>
+      )}
+
+      {state.status === 'ready' && (
+        <section
+          className={styles.recoveryBox}
+          aria-labelledby="cursor-effects-title"
+          aria-busy={savingEffect}
+        >
+          <h2 id="cursor-effects-title" className={styles.cardTitle}>
+            Cursor effects
+          </h2>
+          <ul className={styles['cursor-effects']}>
+            {CURSOR_EFFECTS.map((effect) => {
+              const locked =
+                effect.unlockBadgeId !== null &&
+                !state.profile.badges.some(({ id }) => id === effect.unlockBadgeId);
+              const badge = BADGES.find(({ id }) => id === effect.unlockBadgeId);
+              return (
+                <li key={effect.id}>
+                  <button
+                    type="button"
+                    data-effect-option={effect.id}
+                    className={styles['effect-option']}
+                    aria-pressed={state.profile.cursorEffect === effect.id}
+                    disabled={locked || savingEffect}
+                    onClick={() => void selectEffect(effect.id)}
+                  >
+                    <strong>{effect.name}</strong>
+                    <span>{effect.description}</span>
+                    <span>
+                      {locked
+                        ? `Requires ${badge?.name ?? effect.unlockBadgeId}`
+                        : state.profile.cursorEffect === effect.id
+                          ? 'Selected'
+                          : 'Unlocked'}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {savingEffect && <p role="status">Saving cursor effect...</p>}
+          {effectError && <p role="alert">Could not save the cursor effect. Please try again.</p>}
         </section>
       )}
 

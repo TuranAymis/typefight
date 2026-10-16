@@ -1,0 +1,26 @@
+[
+  {
+    "id": "default",
+    "name": "Default",
+    "description": "A crisp, classic cursor.",
+    "unlockBadgeId": null
+  },
+  {
+    "id": "pulse",
+    "name": "Pulse",
+    "description": "A cool glowing underline with a gentle pulse.",
+    "unlockBadgeId": "first-win"
+  },
+  {
+    "id": "neon-trail",
+    "name": "Neon Trail",
+    "description": "A mint neon block with a soft fading trail.",
+    "unlockBadgeId": "wpm-75"
+  },
+  {
+    "id": "ember",
+    "name": "Ember",
+    "description": "A warm underline with drifting ember light.",
+    "unlockBadgeId": "accuracy-99"
+  }
+]

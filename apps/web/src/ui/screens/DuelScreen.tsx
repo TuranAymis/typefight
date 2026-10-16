@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RECORD_VERSION, computeComboTimeline } from '@typefight/engine';
 import type { KeyEvent } from '@typefight/engine';
 import { useAppStore, useIdentityStore } from '../../store';
+import { track } from '../../analytics';
+import { playSound } from '../../audio';
+import { portal, usePortalGameplay } from '../../portal';
 import { startDuel, submitDuel } from '../../duel/duelApi';
 import type { DuelApiError, DuelOutcome, DuelStart } from '../../duel/duelApi';
 import {
@@ -71,12 +74,22 @@ interface FightViewProps {
 
 /** The running duel. Mounted only for the fight so the typing surface binds to its own element. */
 const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
-  const { typedBuffer, events, elementRef, reset } = useTypingSurface();
+  const { typedBuffer, events, elementRef, reset, cursorEffect } = useTypingSurface();
   const cursorIndex = typedBuffer.length;
+  // FightView only exists while the duel is being fought (not lobby, countdown or result).
+  usePortalGameplay(true);
   const [elapsed, setElapsed] = useState(0);
   const windowRef = useRef<HTMLDivElement>(null);
   useCenteredLine(windowRef, cursorIndex);
   const opponent = duel.opponent;
+
+  // One duel_started per duel (the ref also covers React StrictMode's repeated effect run).
+  const trackedDuel = useRef<string | null>(null);
+  useEffect(() => {
+    if (trackedDuel.current === duel.sessionId) return;
+    trackedDuel.current = duel.sessionId;
+    track('duel_started', { lang: duel.lang, opponent: duel.opponent.isBot ? 'bot' : 'ghost' });
+  }, [duel]);
 
   // The clock starts together with a fresh typing record, so keystroke times and the ghost replay
   // share the same zero.
@@ -118,6 +131,14 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
     );
     return { combo: timeline.finalCombo, staggered };
   }, [duel, events, elapsed]);
+
+  // A hit sound for every damage event, whoever dealt it.
+  const damageCount = live.damageEvents.length;
+  const lastDamageCount = useRef(damageCount);
+  useEffect(() => {
+    if (damageCount > lastDamageCount.current) playSound('hit');
+    lastDamageCount.current = damageCount;
+  }, [damageCount]);
 
   // End conditions: knockout, text finished, or time up.
   useEffect(() => {
@@ -170,6 +191,7 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
       <div
         className={styles.typingContainer}
         ref={elementRef}
+        data-cursor-effect={cursorEffect}
         tabIndex={0}
         role="textbox"
         aria-label="Duel typing area"
@@ -251,6 +273,17 @@ export const DuelScreen = () => {
       return () => window.clearTimeout(timer);
     }
     return undefined;
+  }, [phase]);
+
+  // Victory or defeat jingle once when the result arrives (a draw stays quiet).
+  useEffect(() => {
+    if (phase.name !== 'result') return;
+    const { winner, reason } = phase.outcome.duel;
+    track('duel_completed', { lang: phase.duel.lang, winner, reason });
+    if (winner === 'player') {
+      playSound('victory');
+      portal.happytime();
+    } else if (winner === 'opponent') playSound('defeat');
   }, [phase]);
 
   const finish = useCallback(
@@ -437,7 +470,10 @@ export const DuelScreen = () => {
           <button
             id="duel-rematch"
             className={`${styles.button} ${styles.primaryButton}`}
-            onClick={() => void find(opponent.sessionId)}
+            onClick={() => {
+              track('rematch', { lang: duel.lang });
+              void find(opponent.sessionId);
+            }}
           >
             Rematch
           </button>

@@ -21,9 +21,17 @@ profile.get('/:id', async (context) => {
   const id = context.req.param('id');
   const db = context.env.DB;
   const found = await db
-    .prepare('SELECT id, nickname, rating, created_at FROM players WHERE id = ? AND is_bot = 0')
+    .prepare(
+      'SELECT id, nickname, rating, created_at, cursor_effect FROM players WHERE id = ? AND is_bot = 0',
+    )
     .bind(id)
-    .first<{ id: string; nickname: string; rating: number; created_at: number }>();
+    .first<{
+      id: string;
+      nickname: string;
+      rating: number;
+      created_at: number;
+      cursor_effect: string | null;
+    }>();
   if (!found) return context.json({ error: 'not_found' }, 404);
 
   const stats = await db
@@ -54,6 +62,7 @@ profile.get('/:id', async (context) => {
 
   return context.json({
     playerId: found.id,
+    cursorEffect: found.cursor_effect ?? 'default',
     nickname: found.nickname,
     rating: found.rating,
     createdAt: found.created_at,

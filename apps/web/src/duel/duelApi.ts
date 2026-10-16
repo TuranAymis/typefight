@@ -1,4 +1,5 @@
 import type { KeyEvent, SessionRecord } from '@typefight/engine';
+import { apiUrl } from '../apiBase';
 
 export interface DuelOpponent {
   readonly sessionId: string;
@@ -95,7 +96,7 @@ export const startDuel = async (
   fetchFn: FetchLike = defaultFetch,
 ): Promise<{ readonly ok: true; readonly duel: DuelStart } | Failure> => {
   const reply = await post(
-    '/api/duel/start',
+    apiUrl('/api/duel/start'),
     deviceToken,
     rematchSessionId ? { lang, rematchSessionId } : { lang },
     fetchFn,
@@ -137,7 +138,7 @@ export const submitDuel = async (
   submission: DuelSubmission,
   fetchFn: FetchLike = defaultFetch,
 ): Promise<{ readonly ok: true; readonly outcome: DuelOutcome } | Failure> => {
-  const reply = await post('/api/duel/submit', deviceToken, submission, fetchFn);
+  const reply = await post(apiUrl('/api/duel/submit'), deviceToken, submission, fetchFn);
   if (reply === 'network') return { ok: false, error: 'network' };
   const body = reply.body;
   if (reply.status !== 200 || !body || typeof body['duel'] !== 'object' || body['duel'] === null) {

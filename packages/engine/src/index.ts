@@ -44,3 +44,5 @@ export const ENGINE_INFO: EngineVersionInfo = {
   version: '0.1.0',
   pure: true,
 };
+
+export { tutorialView } from './onboarding';

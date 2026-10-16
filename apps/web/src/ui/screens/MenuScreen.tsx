@@ -1,8 +1,15 @@
 import { useAppStore, useIdentityStore } from '../../store';
+import { useEffect } from 'react';
+import { useOnboardingStore } from '../../store/useOnboardingStore';
 import styles from './Screens.module.css';
 
 export const MenuScreen = () => {
   const setScreen = useAppStore((state) => state.setScreen);
+  const onboarding = useOnboardingStore();
+  const restoreOnboarding = onboarding.restore;
+  useEffect(() => {
+    void restoreOnboarding();
+  }, [restoreOnboarding]);
   const identity = useIdentityStore((state) => state.identity);
 
   return (
@@ -35,6 +42,13 @@ export const MenuScreen = () => {
         )}
       </p>
 
+      <button
+        id="nav-to-onboarding"
+        className={`${styles.button} ${styles.secondaryButton}`}
+        onClick={() => setScreen('onboarding')}
+      >
+        How to play
+      </button>
       <div className={styles.cardGrid}>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
@@ -81,7 +95,12 @@ export const MenuScreen = () => {
           <button
             id="nav-to-duel"
             className={`${styles.button} ${styles.primaryButton}`}
-            onClick={() => setScreen('duel')}
+            disabled={onboarding.onboardingCompleted === null}
+            onClick={() => {
+              const show = !onboarding.onboardingCompleted && !onboarding.shownThisSession;
+              if (show) onboarding.markShown();
+              setScreen(show ? 'onboarding' : 'duel');
+            }}
           >
             Find a Duel
           </button>

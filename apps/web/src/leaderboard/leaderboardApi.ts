@@ -1,3 +1,5 @@
+import { apiUrl } from '../apiBase';
+
 export type BoardLang = 'en' | 'tr';
 export type BoardPeriod = 'daily' | 'all';
 
@@ -44,7 +46,7 @@ export const fetchLeaderboard = async (
     : {};
   let response: Response;
   try {
-    response = await fetchFn(`/api/leaderboard?lang=${lang}&period=${period}`, init);
+    response = await fetchFn(apiUrl(`/api/leaderboard?lang=${lang}&period=${period}`), init);
   } catch {
     return { ok: false, error: 'network' };
   }
