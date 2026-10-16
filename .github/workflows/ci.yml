@@ -42,6 +42,12 @@ jobs:
         run: npm run test:e2e
       - name: Build
         run: npm run build
+      - name: Test the portal build checks
+        run: npm run test:scripts
+      - name: Build and check the CrazyGames build
+        run: npm run build:crazygames
+        env:
+          VITE_API_BASE: https://api.typefight.test
       - name: Upload Playwright artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4

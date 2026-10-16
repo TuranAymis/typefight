@@ -17,3 +17,5 @@ yarn-error.log
 playwright-report/
 test-results/
 .wrangler/
+
+dist-crazygames/
