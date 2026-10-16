@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- test responses are loosely typed JSON */
+import { DUEL_SCENARIOS } from '../../../e2e/tests/support/duelScenarios';
 import { computeResult } from '@typefight/engine';
 import { TEXT_POOL } from '@typefight/texts';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -337,5 +338,46 @@ describe('rematch', () => {
       body: { lang: 'en', rematchSessionId: 5 },
     });
     expect(malformed.status).toBe(400);
+  });
+});
+
+// Shared with Playwright: changes to mocked winners/HP must agree with the real submit route.
+describe('browser duel scenario contracts', () => {
+  it.each(DUEL_SCENARIOS)('$name resolves to the browser mock winner and HP', async (scenario) => {
+    const me = await createPlayer();
+    const started = await call('POST', '/api/duel/start', {
+      token: me.token,
+      body: { lang: 'en' },
+    });
+    db.raw
+      .prepare('UPDATE sessions SET target_text = ? WHERE id = ?')
+      .run(scenario.player.targetText, started.json.sessionId);
+    db.raw
+      .prepare('UPDATE sessions SET record_json = ? WHERE id = ?')
+      .run(JSON.stringify(scenario.ghost), started.json.opponent.sessionId);
+    db.raw
+      .prepare(
+        'UPDATE players SET rating = 1000 WHERE id = (SELECT player_id FROM sessions WHERE id = ?)',
+      )
+      .run(started.json.opponent.sessionId);
+    now += 120000;
+    const submitted = await call('POST', '/api/duel/submit', {
+      token: me.token,
+      body: {
+        sessionId: started.json.sessionId,
+        sessionToken: started.json.sessionToken,
+        events: scenario.player.events,
+        durationMs: scenario.player.durationMs,
+      },
+    });
+    expect(submitted.status).toBe(200);
+    expect(submitted.json.verified).toBe(true);
+    expect(submitted.json.duel).toMatchObject({
+      winner: scenario.winner,
+      reason: scenario.reason,
+      hp: scenario.hp,
+      rating: { before: 1000, after: 1000 + scenario.delta, delta: scenario.delta },
+      ratingApplied: true,
+    });
   });
 });
