@@ -28,6 +28,7 @@ it('exports only the named public runtime API', async () => {
       "placeGlitches",
       "recordGlitchFires",
       "simulateDuel",
+      "tutorialView",
       "typingReducer",
       "updateRatings",
     ]

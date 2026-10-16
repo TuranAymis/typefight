@@ -1,0 +1,75 @@
+.screen {
+  width: 100%;
+  max-width: 800px;
+}
+.top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.caption {
+  min-height: 3em;
+  font-size: 1.25rem;
+  color: var(--color-primary, #00ffd5);
+}
+.surface {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.phrase {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: monospace;
+  font-size: clamp(1.3rem, 4vw, 2rem);
+  line-height: 1.9;
+}
+.demo-label {
+  min-height: 1.5em;
+  color: #ffbe66;
+  font-size: 0.9rem;
+}
+.distorted {
+  display: inline-block;
+  text-shadow:
+    2px 0 #ff668e,
+    -2px 0 #00ffd5;
+  animation: scramble 180ms steps(2) infinite;
+}
+.ready-panel {
+  display: grid;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+.screen button:focus-visible,
+.surface:focus-visible {
+  outline: 3px solid #00ffd5;
+  outline-offset: 5px;
+}
+@keyframes scramble {
+  to {
+    transform: translateY(2px) skewX(8deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .distorted {
+    animation: none;
+    text-shadow: none;
+    border-bottom: 2px dashed #ffbe66;
+  }
+}
+
+.screen > * {
+  flex-shrink: 0;
+}
+
+.hp {
+  width: min(100%, 24rem);
+  margin-bottom: 1.5rem;
+}
+
+.surface[hidden] {
+  display: none;
+}

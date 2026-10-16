@@ -5,13 +5,20 @@ import { indexedDbIdentityStorage } from '../identity/identityStorage';
 import type { IdentityStorage } from '../identity/identityStorage';
 import { registerPlayer } from '../identity/playerApi';
 import type { PlayerIdentity, RegisterResult } from '../identity/playerApi';
-import { recoverProfile } from '../profile/profileApi';
+import { fetchProfile, recoverProfile } from '../profile/profileApi';
+import type { Profile } from '../profile/profileApi';
+import { resolveCursorEffect } from '../profile/cursorEffects';
 import type { RecoverResult } from '../profile/profileApi';
 
 export type IdentityError = NicknameError | 'network' | 'server' | 'storage';
 export type RecoverError = 'invalid_code' | 'rate_limited' | 'network' | 'server' | 'storage';
 
 export interface IdentityState {
+  cursorEffect: string;
+  cursorProfileId: string | null;
+  cursorRevision: number;
+  applyProfile: (profile: Profile) => void;
+  loadCursorEffect: () => Promise<void>;
   status: 'unknown' | 'anonymous' | 'ready';
   identity: PlayerIdentity | null;
   error: IdentityError | null;
@@ -23,6 +30,7 @@ export interface IdentityState {
 }
 
 export interface IdentityDeps {
+  fetchProfile?: typeof fetchProfile;
   storage: IdentityStorage;
   register: (nickname: string) => Promise<RegisterResult>;
   recover?: (code: string) => Promise<RecoverResult>;
@@ -30,7 +38,25 @@ export interface IdentityDeps {
 
 /** Factory with injectable dependencies so the flow can be tested without a browser or server. */
 export const createIdentityStore = (deps: IdentityDeps) =>
-  create<IdentityState>((set) => ({
+  create<IdentityState>((set, get) => ({
+    cursorEffect: 'default',
+    cursorProfileId: null,
+    cursorRevision: 0,
+    applyProfile: (profile) => {
+      if (profile.playerId !== get().identity?.playerId) return;
+      set({
+        cursorEffect: resolveCursorEffect(profile.cursorEffect, profile.badges),
+        cursorRevision: get().cursorRevision + 1,
+      });
+    },
+    loadCursorEffect: async () => {
+      const playerId = get().identity?.playerId;
+      if (!playerId || get().cursorProfileId === playerId) return;
+      set({ cursorProfileId: playerId, cursorEffect: 'default' });
+      const revision = get().cursorRevision;
+      const result = await (deps.fetchProfile ?? fetchProfile)(playerId);
+      if (result.ok && get().cursorRevision === revision) get().applyProfile(result.profile);
+    },
     status: 'unknown',
     identity: null,
     error: null,

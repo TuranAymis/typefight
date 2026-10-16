@@ -1,0 +1,44 @@
+{
+  "key": [{ "wave": "square", "from": 880, "to": 660, "durationMs": 40, "gain": 0.035 }],
+  "hit": [
+    { "wave": "sawtooth", "from": 240, "to": 70, "durationMs": 140, "gain": 0.12 },
+    { "wave": "square", "from": 120, "to": 50, "durationMs": 110, "gain": 0.08 }
+  ],
+  "glitch": [
+    { "wave": "square", "from": 1400, "to": 180, "durationMs": 180, "gain": 0.07 },
+    { "wave": "sawtooth", "from": 160, "to": 1000, "durationMs": 170, "gain": 0.06, "delayMs": 90 },
+    { "wave": "square", "from": 700, "to": 90, "durationMs": 120, "gain": 0.05, "delayMs": 230 }
+  ],
+  "victory": [
+    { "wave": "triangle", "from": 523.25, "to": 523.25, "durationMs": 140, "gain": 0.12 },
+    {
+      "wave": "triangle",
+      "from": 659.25,
+      "to": 659.25,
+      "durationMs": 140,
+      "gain": 0.12,
+      "delayMs": 130
+    },
+    {
+      "wave": "triangle",
+      "from": 783.99,
+      "to": 783.99,
+      "durationMs": 140,
+      "gain": 0.12,
+      "delayMs": 260
+    },
+    {
+      "wave": "triangle",
+      "from": 1046.5,
+      "to": 1046.5,
+      "durationMs": 420,
+      "gain": 0.14,
+      "delayMs": 390
+    }
+  ],
+  "defeat": [
+    { "wave": "sawtooth", "from": 392, "to": 370, "durationMs": 200, "gain": 0.09 },
+    { "wave": "sawtooth", "from": 330, "to": 311, "durationMs": 220, "gain": 0.09, "delayMs": 190 },
+    { "wave": "sawtooth", "from": 262, "to": 196, "durationMs": 480, "gain": 0.1, "delayMs": 400 }
+  ]
+}

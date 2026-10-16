@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { validateNickname } from '@typefight/texts';
+import { CURSOR_EFFECTS, validateNickname } from '@typefight/texts';
 import { findPlayerByToken } from '../auth';
 import {
   normalizeRecoveryCode,
@@ -17,6 +17,41 @@ import {
 import type { AppContext } from '../types';
 
 export const player = new Hono<AppContext>();
+
+/** PUT /api/player/cursor-effect: saves an earned cosmetic for the authenticated player. */
+player.put('/cursor-effect', async (context) => {
+  const current = await findPlayerByToken(context);
+  if (!current) return context.json({ error: 'unauthorized' }, 401);
+  const now = context.get('now')();
+  const budget = await context.env.DB.prepare(
+    `INSERT INTO cursor_effect_attempts (player_id, window_start, attempts) VALUES (?, ?, 1)
+     ON CONFLICT(player_id) DO UPDATE SET
+       attempts = CASE WHEN window_start <= ? THEN 1 ELSE attempts + 1 END,
+       window_start = CASE WHEN window_start <= ? THEN excluded.window_start ELSE window_start END
+     RETURNING attempts`,
+  )
+    .bind(current.id, now, now - 600_000, now - 600_000)
+    .first<{ attempts: number }>();
+  if ((budget?.attempts ?? 0) > 20)
+    return context.json({ error: 'rate_limited' }, 429, { 'Retry-After': '600' });
+  const body: unknown = await context.req.json().catch(() => null);
+  const effectId =
+    typeof body === 'object' && body !== null && 'effectId' in body ? body.effectId : undefined;
+  const effect = CURSOR_EFFECTS.find(({ id }) => id === effectId);
+  if (!effect) return context.json({ error: 'unknown_effect' }, 400);
+  if (effect.unlockBadgeId !== null) {
+    const badge = await context.env.DB.prepare(
+      'SELECT badge_id FROM badges WHERE player_id = ? AND badge_id = ?',
+    )
+      .bind(current.id, effect.unlockBadgeId)
+      .first();
+    if (!badge) return context.json({ error: 'locked_effect' }, 403);
+  }
+  await context.env.DB.prepare('UPDATE players SET cursor_effect = ? WHERE id = ?')
+    .bind(effect.id, current.id)
+    .run();
+  return context.json({ effectId: effect.id });
+});
 
 const generatedNickname = (): string => `Typist-${randomToken().slice(0, 4)}`;
 

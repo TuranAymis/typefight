@@ -1,4 +1,5 @@
 import type { NicknameError } from '@typefight/texts';
+import { apiUrl } from '../apiBase';
 
 export interface PlayerIdentity {
   readonly playerId: string;
@@ -21,7 +22,7 @@ export const registerPlayer = async (
 ): Promise<RegisterResult> => {
   let response: Response;
   try {
-    response = await fetchFn('/api/player', {
+    response = await fetchFn(apiUrl('/api/player'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nickname }),

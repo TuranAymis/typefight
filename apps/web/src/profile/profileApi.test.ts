@@ -5,6 +5,7 @@ const reply = (status: number, body: unknown) => () =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
 const profile = {
+  cursorEffect: 'default',
   playerId: 'p1',
   nickname: 'Ada',
   rating: 1016,

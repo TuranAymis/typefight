@@ -40,3 +40,21 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+/* A visible focus ring for keyboard users on every interactive element. */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+}
+
+/* Portal builds: stop text selection on touch screens (a CrazyGames mobile requirement). */
+html[data-portal] body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html[data-portal] input,
+html[data-portal] textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}

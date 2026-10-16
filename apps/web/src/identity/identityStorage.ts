@@ -18,15 +18,18 @@ const openDb = (): Promise<IDBDatabase> =>
     request.onerror = () => reject(request.error);
   });
 
-const run = async <T>(
+export const runIdentityStorage = async <T>(
   mode: IDBTransactionMode,
   action: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> => {
   const db = await openDb();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const request = action(db.transaction(STORE, mode).objectStore(STORE));
-      request.onsuccess = () => resolve(request.result);
+      const transaction = db.transaction(STORE, mode);
+      const request = action(transaction.objectStore(STORE));
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onabort = () => reject(transaction.error);
+      transaction.onerror = () => reject(transaction.error);
       request.onerror = () => reject(request.error);
     });
   } finally {
@@ -47,13 +50,13 @@ const isIdentity = (value: unknown): value is PlayerIdentity => {
 export const indexedDbIdentityStorage: IdentityStorage = {
   load: async () => {
     try {
-      const value: unknown = await run('readonly', (store) => store.get(KEY));
+      const value: unknown = await runIdentityStorage('readonly', (store) => store.get(KEY));
       return isIdentity(value) ? value : null;
     } catch {
       return null;
     }
   },
   save: async (identity) => {
-    await run('readwrite', (store) => store.put(identity, KEY));
+    await runIdentityStorage('readwrite', (store) => store.put(identity, KEY));
   },
 };

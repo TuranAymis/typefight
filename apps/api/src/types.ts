@@ -1,5 +1,9 @@
 export interface Env {
   DB: D1Database;
+  /** Secret that unlocks /api/admin/metrics. Unset = the endpoint does not exist. */
+  METRICS_TOKEN?: string;
+  /** Comma separated origins (https://*.example.com allowed) that may call the API from a browser. */
+  ALLOWED_ORIGINS?: string;
 }
 
 export interface AppContext {

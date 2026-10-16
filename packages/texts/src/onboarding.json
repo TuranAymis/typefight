@@ -1,0 +1,20 @@
+{
+  "maxHp": 100,
+  "damagePerWord": 8,
+  "glitchDurationMs": 2000,
+  "opponentLabel": "Training dummy",
+  "demoLabel": "Scripted glitch demo",
+  "segments": [
+    { "text": "find your rhythm ", "caption": "Type the glowing text", "expectedStartMs": 0 },
+    {
+      "text": "each word lands a hit ",
+      "caption": "Every word hits your rival",
+      "expectedStartMs": 5440
+    },
+    {
+      "text": "stay calm and keep typing",
+      "caption": "Glitches scramble the screen. Keep typing!",
+      "expectedStartMs": 12480
+    }
+  ]
+}

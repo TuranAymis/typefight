@@ -1,12 +1,14 @@
 import { useAppStore } from '../../store';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { track } from '../../analytics';
+import { usePortalGameplay } from '../../portal';
 import { useCenteredLine } from '../hooks/useCenteredLine';
 import { useTypingSurface } from '../hooks/useTypingSurface';
 import styles from './Screens.module.css';
 
 export const SimulatorScreen = () => {
   const setScreen = useAppStore((state) => state.setScreen);
-  const { typingState, elementRef, reset, warning } = useTypingSurface();
+  const { typingState, elementRef, reset, warning, cursorEffect } = useTypingSurface();
 
   const {
     targetText,
@@ -19,6 +21,16 @@ export const SimulatorScreen = () => {
 
   const windowRef = useRef<HTMLDivElement>(null);
   useCenteredLine(windowRef, cursorIndex);
+
+  // A run starts with its first keypress and completes when the text is finished.
+  const started = totalKeypresses > 0;
+  usePortalGameplay(started && !isComplete);
+  useEffect(() => {
+    if (started) track('sim_started', { lang: 'en' });
+  }, [started]);
+  useEffect(() => {
+    if (isComplete) track('sim_completed', { lang: 'en' });
+  }, [isComplete]);
 
   const typedPart = targetText.slice(0, cursorIndex);
   const cursorChar = cursorIndex < targetText.length ? targetText[cursorIndex] : '';
@@ -36,6 +48,7 @@ export const SimulatorScreen = () => {
       <div
         className={styles.typingContainer}
         ref={elementRef}
+        data-cursor-effect={cursorEffect}
         tabIndex={0}
         role="textbox"
         aria-label="Yazma alanı"

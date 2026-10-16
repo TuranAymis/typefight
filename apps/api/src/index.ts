@@ -1,5 +1,8 @@
 import { Hono } from 'hono';
+import { cors } from './cors';
+import { admin } from './routes/admin';
 import { duel } from './routes/duel';
+import { events } from './routes/events';
 import { leaderboard } from './routes/leaderboard';
 import { player } from './routes/player';
 import { profile } from './routes/profile';
@@ -15,6 +18,8 @@ export const createApp = (clock: () => number = Date.now): Hono<AppContext> => {
     await next();
   });
 
+  app.use('/api/*', cors());
+
   app.get('/health', (context) => context.json({ status: 'ok' }));
 
   app.get('/health/db', async (context) => {
@@ -27,6 +32,8 @@ export const createApp = (clock: () => number = Date.now): Hono<AppContext> => {
   });
 
   app.route('/api/player', player);
+  app.route('/api/events', events);
+  app.route('/api/admin', admin);
   app.route('/api/session', session);
   app.route('/api/duel', duel);
   app.route('/api/profile', profile);
