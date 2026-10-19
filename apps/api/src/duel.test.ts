@@ -1,6 +1,13 @@
+import { OVERCLOCK_SCENARIO } from '../../../e2e/tests/support/glitchScenario';
+import { glitchPassage } from './duelText';
 /* eslint-disable @typescript-eslint/no-explicit-any -- test responses are loosely typed JSON */
 import { DUEL_SCENARIOS } from '../../../e2e/tests/support/duelScenarios';
-import { computeResult } from '@typefight/engine';
+import {
+  computeResult,
+  simulateDuel,
+  sessionGlitchFires,
+  type SessionRecord,
+} from '@typefight/engine';
 import { TEXT_POOL } from '@typefight/texts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { rhythmFlags } from './antiCheat';
@@ -35,13 +42,19 @@ const setRating = (playerId: string, rating: number) =>
   db.raw.prepare('UPDATE players SET rating = ? WHERE id = ?').run(rating, playerId);
 
 /** A verified past run on every English text, so a ghost exists whichever text the duel picks. */
-const addGhostRuns = (playerId: string, wpm: number, options: { verified?: number } = {}) => {
+const addGhostRuns = (
+  playerId: string,
+  wpm: number,
+  options: { verified?: number; legacy?: boolean } = {},
+) => {
   const insert = db.raw.prepare(
     `INSERT INTO sessions (id, player_id, mode, lang, text_id, target_text, seed, token_hash, status,
        started_at, submitted_at, wpm, accuracy, verified, record_json)
      VALUES (?, ?, 'simulator', 'en', ?, ?, 1, 'h', 'submitted', 0, 1, ?, 100, ?, ?)`,
   );
-  for (const passage of TEXT_POOL.filter((p) => p.lang === 'en')) {
+  for (const passage of TEXT_POOL.filter((p) => p.lang === 'en').map((passage) =>
+    options.legacy ? passage : glitchPassage(passage),
+  )) {
     insert.run(
       `ghost-${playerId}-${passage.id}`,
       playerId,
@@ -350,7 +363,7 @@ describe('browser duel scenario contracts', () => {
       body: { lang: 'en' },
     });
     db.raw
-      .prepare('UPDATE sessions SET target_text = ? WHERE id = ?')
+      .prepare("UPDATE sessions SET target_text = ?, text_id = 'legacy-test' WHERE id = ?")
       .run(scenario.player.targetText, started.json.sessionId);
     db.raw
       .prepare('UPDATE sessions SET record_json = ? WHERE id = ?')
@@ -380,4 +393,113 @@ describe('browser duel scenario contracts', () => {
       ratingApplied: true,
     });
   });
+});
+
+describe('versioned glitch integration', () => {
+  it('does not reuse an old unglitched ghost and leaves it untouched', async () => {
+    const me = await createPlayer();
+    const rival = await createPlayer();
+    addGhostRuns(rival.id, 50, { legacy: true });
+    const before = db.raw
+      .prepare('SELECT record_json FROM sessions WHERE player_id = ?')
+      .all(rival.id);
+    const started = await call('POST', '/api/duel/start', { token: me.token, body: {} });
+    expect(started.json.opponent.isBot).toBe(true);
+    expect(started.json.glitch.version).toBe(1);
+    expect(started.json.glitch.markers.length).toBeGreaterThan(0);
+    expect(started.json.opponent.record.glitch).toEqual(started.json.glitch);
+    expect(started.json.opponent.record.targetText).toBe(started.json.text);
+    expect(
+      db.raw.prepare('SELECT record_json FROM sessions WHERE player_id = ?').all(rival.id),
+    ).toEqual(before);
+  });
+
+  it('derives penalties and fires from stored text, ignoring tampered client markers and fires', async () => {
+    const me = await createPlayer();
+    const started = await call('POST', '/api/duel/start', { token: me.token, body: {} });
+    const ghost = started.json.opponent.record as SessionRecord;
+    const marker = ghost.glitch!.markers[0]!;
+    const keys = [...ghost.targetText];
+    keys.splice(marker.charIndex, 0, 'x', 'Backspace');
+    const events = keys.map((key, index) => ({ key, t: 100 + index * 120 }));
+    const durationMs = events.at(-1)!.t + 30;
+    now += 120000;
+    const response = await call('POST', '/api/duel/submit', {
+      token: me.token,
+      body: {
+        sessionId: started.json.sessionId,
+        sessionToken: started.json.sessionToken,
+        events,
+        durationMs,
+        glitch: { version: 1, markers: [] },
+        glitchFires: [],
+        targetText: 'fake',
+      },
+    });
+    expect(response.status).toBe(200);
+    const stored = db.raw
+      .prepare('SELECT record_json FROM sessions WHERE id = ?')
+      .get(started.json.sessionId) as { record_json: string };
+    const record = JSON.parse(stored.record_json) as SessionRecord;
+    expect(record.glitch).toEqual(ghost.glitch);
+    expect(sessionGlitchFires(record)[0]?.outcome).toBe('failed');
+    expect(response.json.duel.hp).toEqual(simulateDuel(record, ghost).hp);
+  });
+
+  it('preserves old-style rematches and their exact outcome without a glitch version', async () => {
+    const me = await createPlayer();
+    const rival = await createPlayer();
+    addGhostRuns(rival.id, 50, { legacy: true });
+    const base = TEXT_POOL.find((entry) => entry.lang === 'en')!;
+    const started = await call('POST', '/api/duel/start', {
+      token: me.token,
+      body: { rematchSessionId: 'ghost-' + rival.id + '-' + base.id },
+    });
+    expect(started.status).toBe(201);
+    expect(started.json.glitch).toBeUndefined();
+    expect(started.json.text).toBe(base.text);
+    const events = humanTyping(base.text);
+    const record: SessionRecord = {
+      version: 1,
+      targetText: base.text,
+      locale: 'en',
+      events,
+      durationMs: events.at(-1)!.t + 30,
+    };
+    now += 120000;
+    const response = await call('POST', '/api/duel/submit', {
+      token: me.token,
+      body: {
+        ...record,
+        sessionId: started.json.sessionId,
+        sessionToken: started.json.sessionToken,
+        glitch: { version: 1, markers: [] },
+      },
+    });
+    expect(response.status).toBe(200);
+    expect(response.json.duel.hp).toEqual(
+      simulateDuel(record, started.json.opponent.record as SessionRecord).hp,
+    );
+    const stored = db.raw
+      .prepare('SELECT record_json FROM sessions WHERE id = ?')
+      .get(started.json.sessionId) as { record_json: string };
+    expect((JSON.parse(stored.record_json) as SessionRecord).glitch).toBeUndefined();
+  });
+});
+
+it('checks the browser OVERCLOCK contract against authoritative engine damage', () => {
+  const make = (keys: string): SessionRecord => ({
+    version: 1,
+    locale: 'en',
+    targetText: OVERCLOCK_SCENARIO.text,
+    durationMs: 60000,
+    events: [...keys].map((key, index) => ({ key, t: (index + 1) * 100 })),
+    glitch: {
+      version: 1,
+      markers: [{ id: 0, charIndex: 0, wordIndex: 0, string: 'noise', effect: 'overclock' }],
+    },
+  });
+  expect(
+    simulateDuel(make(OVERCLOCK_SCENARIO.playerKeys), make(OVERCLOCK_SCENARIO.ghostKeys)),
+  ).toMatchObject(OVERCLOCK_SCENARIO.outcome);
 });

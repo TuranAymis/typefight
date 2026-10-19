@@ -1,3 +1,4 @@
+import type { DuelGlitch } from '../glitch/timeline';
 export const RECORD_VERSION = 1;
 
 export interface KeyEvent {
@@ -6,6 +7,7 @@ export interface KeyEvent {
 }
 
 export interface SessionRecord {
+  readonly glitch?: DuelGlitch;
   readonly version: number;
   readonly targetText: string;
   readonly locale: 'en' | 'tr';

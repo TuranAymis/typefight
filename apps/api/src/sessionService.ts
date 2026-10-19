@@ -1,3 +1,4 @@
+import { glitchForText } from './duelText';
 import type { Context } from 'hono';
 import { computeResult, RECORD_VERSION } from '@typefight/engine';
 import type { KeyEvent, SessionRecord, SessionResult } from '@typefight/engine';
@@ -163,7 +164,12 @@ export const finishSession = async (
     return { status: 422, error: 'impossible_timing' };
   }
 
+  const glitch =
+    mode === 'duel' ? glitchForText(row.text_id, row.target_text, row.lang) : undefined;
+  if (row.text_id.includes(':glitch-v') && !glitch)
+    return { status: 409, error: 'glitch_version_unavailable' };
   const record: SessionRecord = {
+    ...(glitch ? { glitch } : {}),
     version: RECORD_VERSION,
     targetText: row.target_text,
     locale: row.lang,

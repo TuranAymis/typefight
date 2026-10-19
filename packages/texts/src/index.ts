@@ -24,3 +24,6 @@ export {
   validateEventProps,
 } from './analyticsEvents';
 export type { AnalyticsEventName, AnalyticsProps } from './analyticsEvents';
+
+export { default as GLITCH_CONFIG } from './glitch.json';
+export { default as GLITCH_STRINGS } from './glitchPool.json';

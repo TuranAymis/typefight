@@ -17,6 +17,32 @@ const typing = (msPerChar: number, startAt = 300): SessionRecord => {
 };
 
 describe('liveDuel', () => {
+  it('uses authoritative glitch damage and penalties at every replay cutoff', () => {
+    const glitch = {
+      version: 1,
+      markers: [{ id: 0, charIndex: 0, wordIndex: 0, string: 'the', effect: 'overclock' as const }],
+    };
+    const player = { ...typing(100), glitch };
+    const ghost = {
+      ...typing(180),
+      glitch,
+      events: [{ t: 0, key: 'x' }, { t: 1, key: 'Backspace' }, ...typing(180).events],
+    };
+    for (const elapsedMs of [200, 800, 1500, 4000, 60000]) {
+      const official = simulateDuel(player, ghost, { maxHp: 100, durationMs: elapsedMs });
+      const live = liveDuel({
+        targetText: TEXT,
+        locale: 'en',
+        events: player.events,
+        elapsedMs,
+        ghost,
+        glitch,
+      });
+      expect(live.hp).toEqual({ player: official.hp.a, opponent: official.hp.b });
+      expect(live.damageEvents).toEqual(official.damageEvents);
+    }
+  });
+
   it('matches the official engine result once both runs are over', () => {
     const player = typing(100);
     const ghost = typing(180);

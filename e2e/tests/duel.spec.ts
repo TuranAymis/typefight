@@ -295,5 +295,4 @@ test('idle player sees ghost replay advance at its recorded times and reach the 
   await expect(page.locator('#duel-result-title')).toHaveCount(0);
 });
 
-// packages/engine/src/glitch exists, but web/API integration has not been implemented.
-test.fixme('duel glitch fires and is shown to the player', async () => {});
+// Glitch scenarios (SCRAMBLE, BLACKOUT, STATIC, OVERCLOCK, penalty, reduced motion) live in duelGlitches.spec.ts.

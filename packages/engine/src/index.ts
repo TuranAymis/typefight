@@ -46,3 +46,6 @@ export const ENGINE_INFO: EngineVersionInfo = {
 };
 
 export { tutorialView } from './onboarding';
+
+export { activeGlitches, sessionGlitchFires, overclockWordIndices } from './glitch/timeline';
+export type { DuelGlitch, ActiveGlitch } from './glitch/timeline';

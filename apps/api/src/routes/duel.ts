@@ -1,7 +1,8 @@
+import { glitchPassage, glitchForText } from '../duelText';
 import { Hono } from 'hono';
 import { simulateDuel, updateRatings } from '@typefight/engine';
 import type { SessionRecord } from '@typefight/engine';
-import { pickPassage, TEXT_POOL } from '@typefight/texts';
+import { pickPassage, TEXT_POOL, type TextPassage } from '@typefight/texts';
 import { findPlayerByToken } from '../auth';
 import { awardBadges } from '../badges';
 import { randomId, randomSeed } from '../crypto';
@@ -26,7 +27,7 @@ duel.post('/start', async (context) => {
   if (!isLang(lang)) return context.json({ error: 'invalid_lang' }, 400);
 
   // Rematch: same opponent run on the same text. Otherwise pick a text and match on it.
-  let passage = pickPassage(lang, randomSeed());
+  let passage: TextPassage = glitchPassage(pickPassage(lang, randomSeed()));
   let rematch: Awaited<ReturnType<typeof findOpponentBySession>>;
   if (body.rematchSessionId !== undefined) {
     if (typeof body.rematchSessionId !== 'string') {
@@ -37,10 +38,16 @@ duel.post('/start', async (context) => {
       sessionId: body.rematchSessionId,
       lang,
     });
-    const rematchPassage = TEXT_POOL.find(
+    const rematchPassage = [...TEXT_POOL, ...TEXT_POOL.map(glitchPassage)].find(
       (entry) => entry.lang === lang && entry.text === rematch?.record.targetText,
     );
-    if (!rematch || !rematchPassage) return context.json({ error: 'invalid_rematch' }, 404);
+    if (
+      !rematch ||
+      !rematchPassage ||
+      JSON.stringify(rematch.record.glitch) !==
+        JSON.stringify(glitchForText(rematchPassage.id, rematchPassage.text, lang))
+    )
+      return context.json({ error: 'invalid_rematch' }, 404);
     passage = rematchPassage;
   }
   const opponent =
@@ -61,6 +68,7 @@ duel.post('/start', async (context) => {
   return context.json(
     {
       ...started,
+      glitch: glitchForText(passage.id, passage.text, lang),
       opponent: {
         sessionId: opponent.sessionId,
         nickname: opponent.nickname,
