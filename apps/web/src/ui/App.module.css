@@ -94,6 +94,20 @@
   cursor: pointer;
 }
 
+.feedbackLink {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.25rem 0.75rem;
+  text-decoration: none;
+}
+
+.feedbackLink:hover,
+.feedbackLink:focus-visible {
+  color: var(--text-primary);
+}
+
 .soundToggle[data-muted='true'] {
   color: var(--text-muted);
   text-decoration: line-through;

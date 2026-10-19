@@ -5,4 +5,6 @@ interface ImportMetaEnv {
   readonly VITE_CF_BEACON_TOKEN?: string;
   /** Base URL of the deployed API for portal builds (no trailing slash). Unset = same origin. */
   readonly VITE_API_BASE?: string;
+  /** https address of the feedback form or issue tracker. Unset = no feedback link. */
+  readonly VITE_FEEDBACK_URL?: string;
 }

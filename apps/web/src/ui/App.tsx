@@ -3,6 +3,7 @@ import { useAppStore, useIdentityStore } from '../store';
 import { trackGameOpen } from '../analytics';
 import { portal } from '../portal';
 import { useSoundStore } from '../store/useSoundStore';
+import { FeedbackLink } from '../feedback/FeedbackLink';
 import { MenuScreen } from './screens/MenuScreen';
 import { SimulatorScreen } from './screens/SimulatorScreen';
 import { GauntletScreen } from './screens/GauntletScreen';
@@ -83,6 +84,7 @@ export const App = () => {
           >
             {muted ? 'Sound: off' : 'Sound: on'}
           </button>
+          <FeedbackLink />
           <div>
             <span className={styles.statusIndicator}></span>
             <span>SYSTEM: SKELETON_V0.1</span>
