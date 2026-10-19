@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "durationMs": {
+    "scramble": 4000,
+    "blackout": 3000,
+    "static": 5000
+  },
+  "overclockWords": 3,
+  "overclockMultiplier": 1.5,
+  "cooldownMs": 8000,
+  "failPenalty": 3
+}

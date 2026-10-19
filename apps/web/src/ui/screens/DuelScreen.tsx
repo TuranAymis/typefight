@@ -1,3 +1,6 @@
+import { GLITCH_CONFIG } from '@typefight/texts';
+import { useDuelGlitches } from '../../duel/useDuelGlitches';
+import glitchStyles from './DuelGlitch.module.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RECORD_VERSION, computeComboTimeline } from '@typefight/engine';
 import type { KeyEvent } from '@typefight/engine';
@@ -82,6 +85,7 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
   const windowRef = useRef<HTMLDivElement>(null);
   useCenteredLine(windowRef, cursorIndex);
   const opponent = duel.opponent;
+  const glitches = useDuelGlitches(duel, events, elapsed);
 
   // One duel_started per duel (the ref also covers React StrictMode's repeated effect run).
   const trackedDuel = useRef<string | null>(null);
@@ -115,6 +119,7 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
         events,
         elapsedMs: elapsed,
         ghost: opponent.record,
+        ...(duel.glitch ? { glitch: duel.glitch } : {}),
       }),
     [duel, opponent.record, events, elapsed],
   );
@@ -153,6 +158,14 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
   const ghostAt = ghostPosition(opponent.record, elapsed);
   const flashes = live.damageEvents.filter((event) => elapsed - event.t < DAMAGE_FLASH_MS);
   const chars = [...duel.text];
+  const wordAt: number[] = [];
+  let word = 0;
+  for (const char of chars) {
+    wordAt.push(word);
+    if (char === ' ') word += 1;
+  }
+  const markedWords = new Set(duel.glitch?.markers.map((marker) => marker.wordIndex));
+  const effectNames = glitches.active.map((entry) => entry.fire.effect);
 
   return (
     <div className={styles.screenContainer} id="screen-duel">
@@ -188,6 +201,21 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
         ))}
       </div>
 
+      <p id="duel-glitch-feedback" aria-live="polite">
+        {glitches.feedback}
+      </p>
+      <div id="duel-glitch-effects" className={glitchStyles['effect-marker']}>
+        {glitches.active.map(({ fire, remainingMs }) => (
+          <span key={fire.glitchId} data-effect={fire.effect}>
+            {fire.effect.toUpperCase()} {Math.ceil(remainingMs / 1000)}s{' '}
+          </span>
+        ))}
+        {glitches.incomingWords > 0 && (
+          <span data-effect="overclock">
+            Incoming OVERCLOCK x{GLITCH_CONFIG.overclockMultiplier}: {glitches.incomingWords} words
+          </span>
+        )}
+      </div>
       <div
         className={styles.typingContainer}
         ref={elementRef}
@@ -196,25 +224,64 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
         role="textbox"
         aria-label="Duel typing area"
       >
-        <div className={styles.textWindow} ref={windowRef} id="duel-window">
-          <div className={styles.streamDisplay} id="duel-stream">
-            {chars.map((char, index) => (
-              <span
-                key={index}
-                data-cursor={index === cursorIndex ? '' : undefined}
-                className={[
-                  index >= cursorIndex
-                    ? styles.charRemaining
-                    : typedBuffer[index] === char
-                      ? styles.charTyped
-                      : styles.charWrong,
-                  index === cursorIndex ? styles.charCursor : '',
-                  index === ghostAt.cursor ? styles.ghostMark : '',
-                ].join(' ')}
-              >
-                {char}
-              </span>
-            ))}
+        <div
+          className={[
+            glitchStyles['window-frame'],
+            effectNames.includes('blackout') ? glitchStyles.blackout : '',
+            effectNames.includes('static') ? glitchStyles.static : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          id="duel-visual-effects"
+        >
+          <div className={styles.textWindow} ref={windowRef} id="duel-window">
+            <div
+              className={styles.streamDisplay}
+              id="duel-stream"
+              role="group"
+              aria-label={duel.text}
+            >
+              {chars.map((char, index) => (
+                <span
+                  key={index}
+                  aria-hidden="true"
+                  data-cursor={index === cursorIndex ? '' : undefined}
+                  className={[
+                    index >= cursorIndex
+                      ? styles.charRemaining
+                      : typedBuffer[index] === char
+                        ? styles.charTyped
+                        : styles.charWrong,
+                    index === cursorIndex ? styles.charCursor : '',
+                    index === ghostAt.cursor ? styles.ghostMark : '',
+                    markedWords.has(wordAt[index] ?? -1) ? glitchStyles['glitch-word'] : '',
+                    glitches.boosted.includes(wordAt[index] ?? -1)
+                      ? glitchStyles['boosted-word']
+                      : '',
+                    glitchStyles['word-start'],
+                  ].join(' ')}
+                >
+                  {glitches.boosted.includes(wordAt[index] ?? -1) &&
+                    (index === 0 || chars[index - 1] === ' ') && (
+                      <span className={glitchStyles.multiplier}>
+                        x{GLITCH_CONFIG.overclockMultiplier}
+                      </span>
+                    )}
+                  {effectNames.includes('scramble') &&
+                  index >= glitches.nextStart &&
+                  index < glitches.nextEnd ? (
+                    <>
+                      <span className={glitchStyles['visual-char']}>
+                        {glitches.scrambled[index - glitches.nextStart]}
+                      </span>
+                      <span className={glitchStyles['real-char']}>{char}</span>
+                    </>
+                  ) : (
+                    char
+                  )}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
         <div className={styles.ghostTrack} aria-hidden="true">

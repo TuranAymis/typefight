@@ -1,3 +1,4 @@
+import { glitchForText } from './duelText';
 import { computeResult, RECORD_VERSION } from '@typefight/engine';
 import type { SessionRecord } from '@typefight/engine';
 import type { TextPassage } from '@typefight/texts';
@@ -35,7 +36,9 @@ export const generateBotRecord = (passage: TextPassage, level: BotLevel): Sessio
     t += meanInterval * jitter;
     return { t: Math.round(t), key };
   });
+  const glitch = glitchForText(passage.id, passage.text, passage.lang);
   return {
+    ...(glitch ? { glitch } : {}),
     version: RECORD_VERSION,
     targetText: passage.text,
     locale: passage.lang,

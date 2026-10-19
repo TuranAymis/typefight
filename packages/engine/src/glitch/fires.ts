@@ -1,3 +1,4 @@
+import { GLITCH_CONFIG } from '@typefight/texts';
 import { computeComboTimeline } from '../duel/combo';
 import type { SessionRecord } from '../session/types';
 import type { GlitchMarker } from './placement';
@@ -10,7 +11,10 @@ export interface GlitchRules {
   readonly failPenalty: number;
 }
 
-export const DEFAULT_GLITCH_RULES: GlitchRules = { cooldownMs: 8000, failPenalty: 3 };
+export const DEFAULT_GLITCH_RULES: GlitchRules = {
+  cooldownMs: GLITCH_CONFIG.cooldownMs,
+  failPenalty: GLITCH_CONFIG.failPenalty,
+};
 
 /**
  * fired:    glitch string typed without a single wrong key, effect applies to the opponent.

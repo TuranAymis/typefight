@@ -1,5 +1,5 @@
 import { RECORD_VERSION, simulateDuel } from '@typefight/engine';
-import type { DamageEvent, KeyEvent, Locale, SessionRecord } from '@typefight/engine';
+import type { DuelGlitch, DamageEvent, KeyEvent, Locale, SessionRecord } from '@typefight/engine';
 
 export const DUEL_DURATION_MS = 60_000;
 export const COUNTDOWN_SECONDS = 3;
@@ -18,6 +18,7 @@ export interface LiveDuel {
  * records are cut at `elapsedMs`, so nobody sees damage from the future.
  */
 export const liveDuel = (input: {
+  readonly glitch?: DuelGlitch;
   readonly targetText: string;
   readonly locale: Locale;
   readonly events: readonly KeyEvent[];
@@ -26,6 +27,7 @@ export const liveDuel = (input: {
 }): LiveDuel => {
   const elapsed = Math.min(Math.max(input.elapsedMs, 1), DUEL_DURATION_MS);
   const player: SessionRecord = {
+    ...(input.glitch ? { glitch: input.glitch } : {}),
     version: RECORD_VERSION,
     targetText: input.targetText,
     locale: input.locale,

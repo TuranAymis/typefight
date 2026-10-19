@@ -1,3 +1,4 @@
+import { glitchForText } from './duelText';
 import type { SessionRecord } from '@typefight/engine';
 import type { TextPassage } from '@typefight/texts';
 import { ensureBotSession, nearestBotLevel } from './bots';
@@ -119,7 +120,13 @@ export const findOpponent = async (
     lang: input.lang,
     textId: input.passage.id,
   });
-  if (ghost) return ghost;
+  const glitch = glitchForText(input.passage.id, input.passage.text, input.lang);
+  if (
+    ghost &&
+    ghost.record.targetText === input.passage.text &&
+    JSON.stringify(ghost.record.glitch) === JSON.stringify(glitch)
+  )
+    return ghost;
 
   const level = nearestBotLevel(await expectedWpm(db, input.playerId));
   const sessionId = await ensureBotSession(db, now, level, input.passage);

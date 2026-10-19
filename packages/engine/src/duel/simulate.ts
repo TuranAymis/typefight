@@ -1,3 +1,5 @@
+import { GLITCH_CONFIG } from '@typefight/texts';
+import { sessionGlitchFires, overclockWordIndices } from '../glitch/timeline';
 import { computeResult } from '../session/scoring';
 import type { DamageEvent, SessionRecord } from '../session/types';
 import { computeComboTimeline } from './combo';
@@ -25,6 +27,7 @@ export interface DuelResult {
 }
 
 const damageOf = (record: SessionRecord, source: DamageEvent['source'], limit: number) => {
+  const boosted = new Set(overclockWordIndices(record));
   const staggerSpans: { from: number; to: number }[] = [];
   const events: DamageEvent[] = [];
   const cutoff = Math.min(limit, record.durationMs);
@@ -34,8 +37,20 @@ const damageOf = (record: SessionRecord, source: DamageEvent['source'], limit: n
       staggerSpans.push({ from: event.t, to: event.endsAt });
     } else if (event.type === 'word') {
       const staggered = staggerSpans.some((w) => event.t > w.from && event.t < w.to);
-      const amount = computeDamage({ wordLength: event.length, combo: event.combo, staggered });
+      const base = computeDamage({ wordLength: event.length, combo: event.combo, staggered });
+      const amount = boosted.has(event.wordIndex)
+        ? Math.floor(base * GLITCH_CONFIG.overclockMultiplier)
+        : base;
       if (amount > 0) events.push({ t: event.t, amount, source });
+    }
+  }
+  for (const fire of sessionGlitchFires(record)) {
+    if (fire.outcome === 'failed' && fire.t <= cutoff) {
+      events.push({
+        t: fire.t,
+        amount: fire.penalty,
+        source: source === 'player' ? 'opponent' : 'player',
+      });
     }
   }
   return events;

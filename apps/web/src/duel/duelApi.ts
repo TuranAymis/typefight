@@ -1,4 +1,4 @@
-import type { KeyEvent, SessionRecord } from '@typefight/engine';
+import type { DuelGlitch, KeyEvent, SessionRecord } from '@typefight/engine';
 import { apiUrl } from '../apiBase';
 
 export interface DuelOpponent {
@@ -11,6 +11,7 @@ export interface DuelOpponent {
 }
 
 export interface DuelStart {
+  readonly glitch?: DuelGlitch;
   readonly sessionId: string;
   readonly sessionToken: string;
   readonly lang: 'en' | 'tr';
@@ -120,6 +121,7 @@ export const startDuel = async (
       sessionToken: body['sessionToken'],
       lang,
       text: body['text'],
+      ...(body['glitch'] ? { glitch: body['glitch'] as DuelGlitch } : {}),
       opponent: body['opponent'],
     },
   };

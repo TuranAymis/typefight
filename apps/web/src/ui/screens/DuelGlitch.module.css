@@ -1,0 +1,74 @@
+.window-frame {
+  position: relative;
+}
+.glitch-word {
+  color: #ffb8ff;
+  text-decoration: underline dotted;
+}
+.boosted-word {
+  text-shadow: 0 0 6px #ffca58;
+}
+.multiplier {
+  position: absolute;
+  top: -1.1em;
+  font-size: 0.45em;
+  color: #ffca58;
+}
+.word-start {
+  position: relative;
+}
+.blackout {
+  position: relative;
+}
+.blackout::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 50%;
+  background: #080a12;
+  opacity: 0.96;
+  pointer-events: none;
+  z-index: 2;
+}
+.static {
+  position: relative;
+  animation: static-jitter 1s steps(2, end) infinite;
+}
+.static::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0 4px, #b8c9ff33 4px 5px);
+  pointer-events: none;
+  z-index: 3;
+}
+.effect-marker {
+  font-size: 0.8rem;
+  color: #ffb8ff;
+}
+.real-char {
+  display: none;
+}
+@keyframes static-jitter {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .static {
+    animation: none;
+  }
+  .static::before,
+  .blackout::after {
+    display: none;
+  }
+  .visual-char {
+    display: none;
+  }
+  .real-char {
+    display: inline;
+  }
+}
