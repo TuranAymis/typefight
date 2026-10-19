@@ -19,3 +19,7 @@ test-results/
 .wrangler/
 
 dist-crazygames/
+
+# Gameplay clip working files (the finished GIF/video in media/ are committed)
+/media/raw/
+/media/frames/

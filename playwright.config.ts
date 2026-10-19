@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 /** The API address baked into the portal build the portal project tests (nothing listens there). */
 export const PORTAL_API_BASE = 'https://api.typefight.test';
 
+/** The feedback address both builds get; the portal build must still not show the link. */
+export const FEEDBACK_URL = 'https://feedback.typefight.test/form';
+
 export default defineConfig({
   testDir: './e2e/tests',
   fullyParallel: true,
@@ -20,12 +23,13 @@ export default defineConfig({
     {
       name: 'portal',
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4173' },
-      testMatch: '**/portal.spec.ts',
+      testMatch: ['**/portal.spec.ts', '**/feedback.spec.ts'],
     },
   ],
   webServer: [
     {
       command: 'npm run dev -w @typefight/web',
+      env: { VITE_FEEDBACK_URL: FEEDBACK_URL },
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env['CI'],
     },
@@ -34,7 +38,7 @@ export default defineConfig({
         'npm run build:crazygames && npm run preview -w @typefight/web -- --outDir dist-crazygames --port 4173 --strictPort',
       url: 'http://localhost:4173',
       reuseExistingServer: !process.env['CI'],
-      env: { VITE_API_BASE: PORTAL_API_BASE },
+      env: { VITE_API_BASE: PORTAL_API_BASE, VITE_FEEDBACK_URL: FEEDBACK_URL },
       timeout: 120_000,
     },
   ],
