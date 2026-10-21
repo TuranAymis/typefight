@@ -1,0 +1,34 @@
+/* Fixed-size room for a banner: 320x50 on phones, 728x90 from tablet width up. */
+.slot {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 1rem 1.5rem;
+}
+
+.unit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 320px;
+  max-width: 100%;
+  height: 50px;
+  border: 1px dashed var(--border-subtle);
+  background: rgba(18, 24, 36, 0.5);
+  pointer-events: none;
+  user-select: none;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@media (min-width: 760px) {
+  .unit {
+    width: 728px;
+    height: 90px;
+  }
+}
