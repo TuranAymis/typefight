@@ -21,8 +21,10 @@
     "test": "npm run test --workspaces --if-present",
     "test:engine": "npm run test:coverage -w @typefight/engine",
     "test:e2e": "playwright test",
+    "test:regression": "npm test && npm run test:e2e",
     "build:crazygames": "npm run build:crazygames -w @typefight/web && node scripts/portalBuildCheck.mjs",
-    "test:scripts": "node --test scripts/*.test.mjs"
+    "test:scripts": "node --test scripts/*.test.mjs",
+    "smoke": "node scripts/smokeTest.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",

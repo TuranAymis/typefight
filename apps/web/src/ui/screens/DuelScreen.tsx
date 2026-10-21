@@ -188,9 +188,9 @@ const FightView = ({ duel, nickname, onFinish }: FightViewProps) => {
       </div>
 
       <div className={styles.damageRow} aria-live="polite">
-        {flashes.map((event) => (
+        {flashes.map((event, index) => (
           <span
-            key={`${event.source}-${event.t}`}
+            key={`${event.source}-${event.t}-${index}`}
             className={event.source === 'player' ? styles.damageDealt : styles.damageTaken}
             data-source={event.source}
           >

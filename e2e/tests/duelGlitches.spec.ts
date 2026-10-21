@@ -223,13 +223,13 @@ test('each glitch fired in a duel is recorded once as glitch_fired with only the
     sent.flatMap((body) => body.events).filter((event) => event.name === 'glitch_fired');
   // The ghost fires at 600 ms: the batch is sent after the 2 s analytics delay.
   await page.clock.runFor(3000);
-  expect(glitchEvents().map((event) => event.props)).toEqual([{ source: 'duel' }]);
+  // The batch is sent after an async (real-time) read of the device id, so wait for it to arrive.
+  await expect.poll(() => glitchEvents().map((event) => event.props)).toEqual([{ source: 'duel' }]);
   await page.keyboard.type('noise ');
   await page.clock.runFor(3000);
-  expect(glitchEvents().map((event) => event.props)).toEqual([
-    { source: 'duel' },
-    { source: 'duel' },
-  ]);
+  await expect
+    .poll(() => glitchEvents().map((event) => event.props))
+    .toEqual([{ source: 'duel' }, { source: 'duel' }]);
   // Nothing re-fires while the effects expire and the clock keeps running.
   await page.clock.runFor(10000);
   expect(glitchEvents()).toHaveLength(2);
