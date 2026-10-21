@@ -1,5 +1,7 @@
 # TypeFight.io ⚔️
 
+Production operations: [Monitoring and post-deploy smoke test runbook](docs/monitoring.md).
+
 TypeFight.io is a competitive, browser-based typing game that treats keyboard input as a weapon and movement mechanism. Designed with a sleek cyberpunk aesthetic, high-contrast typography, and strict competitive integrity.
 
 > **Authoritative Specification:** [docs/spec.md](docs/spec.md) (in Turkish)  
