@@ -23,13 +23,13 @@ export default defineConfig({
     {
       name: 'portal',
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4173' },
-      testMatch: ['**/portal.spec.ts', '**/feedback.spec.ts'],
+      testMatch: ['**/portal.spec.ts', '**/feedback.spec.ts', '**/ads.spec.ts'],
     },
   ],
   webServer: [
     {
       command: 'npm run dev -w @typefight/web',
-      env: { VITE_FEEDBACK_URL: FEEDBACK_URL },
+      env: { VITE_FEEDBACK_URL: FEEDBACK_URL, VITE_AD_PLACEHOLDERS: 'true' },
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env['CI'],
     },
@@ -38,7 +38,11 @@ export default defineConfig({
         'npm run build:crazygames && npm run preview -w @typefight/web -- --outDir dist-crazygames --port 4173 --strictPort',
       url: 'http://localhost:4173',
       reuseExistingServer: !process.env['CI'],
-      env: { VITE_API_BASE: PORTAL_API_BASE, VITE_FEEDBACK_URL: FEEDBACK_URL },
+      env: {
+        VITE_API_BASE: PORTAL_API_BASE,
+        VITE_FEEDBACK_URL: FEEDBACK_URL,
+        VITE_AD_PLACEHOLDERS: 'true',
+      },
       timeout: 120_000,
     },
   ],

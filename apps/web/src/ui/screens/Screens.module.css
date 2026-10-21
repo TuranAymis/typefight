@@ -47,6 +47,14 @@
   margin-bottom: 1rem;
 }
 
+/* A long word such as LEADERBOARD must fit a 360px phone. */
+@media (max-width: 480px) {
+  .title {
+    font-size: 2.2rem;
+    overflow-wrap: anywhere;
+  }
+}
+
 .description {
   color: var(--text-secondary);
   font-size: 1.1rem;
