@@ -7,4 +7,6 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE?: string;
   /** https address of the feedback form or issue tracker. Unset = no feedback link. */
   readonly VITE_FEEDBACK_URL?: string;
+  /** "true" shows banner placeholders on the calm screens. Never shown in the portal build. */
+  readonly VITE_AD_PLACEHOLDERS?: string;
 }

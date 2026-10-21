@@ -26,7 +26,7 @@ stays a later option. Sources: <https://docs.crazygames.com/requirements/technic
 | `gameplayStart` when the player starts playing, `gameplayStop` otherwise | done   | `usePortalGameplay` in Simulator, Duel fight and the tutorial; never twice in a row |
 | Loading start/stop (optional)                                            | done   | `portal.loadingStart()` before render, `loadingStop()` on the first screen |
 | `happytime` on a special moment (use sparingly)                          | done   | duel victory only                                                        |
-| Only ads served through the SDK                                          | done   | the game has no ads of its own; SDK ads are not wired in (optional later) |
+| Only ads served through the SDK                                          | done   | the game has no ads of its own; the web build's banner placeholders (`VITE_AD_PLACEHOLDERS`) are forced off in this build; SDK ads are not wired in (optional later) |
 | No third-party scripts or fonts besides the SDK                          | done   | Google Fonts link removed in the portal build (system font fallback); Cloudflare beacon is skipped there |
 | Mobile: no text selection                                                | done   | `html[data-portal] body { user-select: none }`, inputs excluded          |
 | Prevent page scroll on space/arrow keys                                  | partly | space is prevented by the typing surfaces; the game never uses arrow keys, so they can still scroll a page that overflows |

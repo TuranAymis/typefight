@@ -4,6 +4,7 @@ import { trackGameOpen } from '../analytics';
 import { portal } from '../portal';
 import { useSoundStore } from '../store/useSoundStore';
 import { FeedbackLink } from '../feedback/FeedbackLink';
+import { AdSlot } from '../ads/AdSlot';
 import { MenuScreen } from './screens/MenuScreen';
 import { SimulatorScreen } from './screens/SimulatorScreen';
 import { GauntletScreen } from './screens/GauntletScreen';
@@ -108,6 +109,7 @@ export const App = () => {
           {currentScreen === 'onboarding' && <OnboardingScreen />}
         </ErrorBoundary>
       </main>
+      <AdSlot screen={currentScreen} />
     </div>
   );
 };
