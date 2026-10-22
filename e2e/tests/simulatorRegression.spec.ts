@@ -53,3 +53,14 @@ test('completed practice restarts and manual results allow a fresh run or return
   await expect(page.locator('#screen-menu')).toBeVisible();
   await expect(page.locator('#main-content')).toBeFocused();
 });
+
+test('Esc restarts the practice', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#nav-to-simulator').click();
+  await page.keyboard.type('the');
+  await expect(page.locator('#stat-position')).toHaveText('3 / 43');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#stat-position')).toHaveText('0 / 43');
+  await expect(page.locator('#stat-keypresses')).toHaveText('0');
+  await expect(page.getByRole('textbox')).toBeFocused();
+});
