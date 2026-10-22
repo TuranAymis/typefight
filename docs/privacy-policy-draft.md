@@ -28,9 +28,12 @@ game does not use cookies or localStorage.
 
 ## What we do not do
 
-We do not sell data, show ads of our own, or collect your name, email address, location or contact
-details. Pages hosted by a game portal may use the portal's own cookies and ads under the portal's
-policy.
+We do not sell data, or collect your name, email address, location or contact details. On our own
+site, a banner on the menu, results, leaderboard and profile screens shows either an ad from an ad
+provider (Google AdSense, when we turn it on; it may use cookies under its own policy and your
+consent choices) or a link to one of our other apps, which loads nothing from outside our site
+until you click it. Pages hosted by a game portal may use the portal's own cookies and ads under the
+portal's policy.
 
 ## Do Not Track
 

@@ -9,4 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_FEEDBACK_URL?: string;
   /** "true" shows banner placeholders on the calm screens. Never shown in the portal build. */
   readonly VITE_AD_PLACEHOLDERS?: string;
+  /** AdSense publisher id (ca-pub-...). With VITE_ADSENSE_SLOT the slot tries AdSense first. */
+  readonly VITE_ADSENSE_CLIENT?: string;
+  /** AdSense ad unit id for the banner slot. */
+  readonly VITE_ADSENSE_SLOT?: string;
 }

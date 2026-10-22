@@ -16,8 +16,14 @@ test('calm screens reserve a fixed banner slot that does not move the page or ta
   await expect(slot).toHaveAccessibleName('Advertisement');
   const box = await slot.locator('[data-ad-placeholder]').boundingBox();
   expect(box?.height).toBe(90);
-  // Not focusable, not clickable.
-  expect(await slot.locator('a, button, [tabindex]').count()).toBe(0);
+  // No provider is configured in the tests, so the slot shows one of our own apps.
+  await expect(slot).toHaveAttribute('data-ad-source', 'house');
+  const link = slot.getByRole('link', { name: /Vento/ });
+  await expect(link).toHaveAttribute('href', 'https://ventoride.com');
+  await expect(link).toHaveAttribute('target', '_blank');
+  await expect(link).toHaveAttribute('rel', /noopener/);
+  await expect(slot.locator('img')).toHaveJSProperty('complete', true);
+  expect(await slot.locator('img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   // The unit keeps its size while the rest of the page settles (the menu itself may grow once the
   // player identity loads, which is not the banner's doing).
   const unit = slot.locator('[data-ad-placeholder]');

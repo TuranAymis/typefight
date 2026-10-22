@@ -12,15 +12,58 @@
   width: 320px;
   max-width: 100%;
   height: 50px;
-  border: 1px dashed var(--border-subtle);
+  overflow: hidden;
+}
+
+/* One of our own apps. */
+.house {
+  position: relative;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border-subtle);
   background: rgba(18, 24, 36, 0.5);
-  pointer-events: none;
-  user-select: none;
+  color: inherit;
+  text-decoration: none;
+}
+
+.house:hover,
+.house:focus-visible {
+  border-color: var(--text-muted);
+}
+
+.icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.tagline {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 .label {
+  position: absolute;
+  top: 2px;
+  right: 4px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -30,5 +73,19 @@
   .unit {
     width: 728px;
     height: 90px;
+  }
+
+  .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+  }
+
+  .name {
+    font-size: 1rem;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
   }
 }
