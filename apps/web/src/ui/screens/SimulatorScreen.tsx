@@ -32,6 +32,15 @@ export const SimulatorScreen = () => {
     if (isComplete) track('sim_completed', { lang: 'en' });
   }, [isComplete]);
 
+  // Esc restarts the practice at any point.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') reset();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [reset]);
+
   const typedPart = targetText.slice(0, cursorIndex);
   const cursorChar = cursorIndex < targetText.length ? targetText[cursorIndex] : '';
   const remainingPart = cursorIndex < targetText.length ? targetText.slice(cursorIndex + 1) : '';
