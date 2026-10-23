@@ -83,7 +83,10 @@ player.post('/', async (context) => {
 
   const ipHash = await clientIpHash(context);
   const now = context.get('now')();
-  if (await tooManyNewPlayers(context.env.DB, now, ipHash)) {
+  if (
+    context.env.DISABLE_PLAYER_LIMIT !== '1' &&
+    (await tooManyNewPlayers(context.env.DB, now, ipHash))
+  ) {
     return context.json({ error: 'rate_limited' }, 429, { 'Retry-After': '3600' });
   }
 

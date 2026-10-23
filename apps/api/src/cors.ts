@@ -47,7 +47,7 @@ export const cors = (): MiddlewareHandler<AppContext> => async (context, next) =
   context.header('Vary', 'Origin');
   if (context.req.method === 'OPTIONS') {
     if (!allowed) return context.body(null, 403);
-    context.header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+    context.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, OPTIONS');
     context.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     context.header('Access-Control-Max-Age', String(PREFLIGHT_MAX_AGE_S));
     return context.body(null, 204);

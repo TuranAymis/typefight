@@ -12,6 +12,10 @@
   "env": {
     "staging": {
       "name": "typefight-api-staging",
+      "vars": {
+        "DISABLE_PLAYER_LIMIT": "1",
+        "ALLOWED_ORIGINS": "https://typefight-staging.pages.dev"
+      },
       "d1_databases": [
         {
           "binding": "DB",

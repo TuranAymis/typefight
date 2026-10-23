@@ -4,6 +4,8 @@ export interface Env {
   METRICS_TOKEN?: string;
   /** Comma separated origins (https://*.example.com allowed) that may call the API from a browser. */
   ALLOWED_ORIGINS?: string;
+  /** "1" lifts the per-IP limit on new profiles (local dev and staging only; never set in production). */
+  DISABLE_PLAYER_LIMIT?: string;
 }
 
 export interface AppContext {

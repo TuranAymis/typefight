@@ -12,14 +12,17 @@ const app = createApp(() => now);
 const call = async (
   method: string,
   path: string,
-  options: { token?: string; body?: unknown; ip?: string } = {},
+  options: { token?: string; body?: unknown; ip?: string; env?: Record<string, string> } = {},
 ): Promise<{ status: number; json: Record<string, unknown> }> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
   if (options.ip) headers['CF-Connecting-IP'] = options.ip;
   const init: RequestInit = { method, headers };
   if (options.body !== undefined) init.body = JSON.stringify(options.body);
-  const response = await app.request(path, init, { DB: db.d1 });
+  const response = await app.request(path, init, {
+    DB: db.d1,
+    ...options.env,
+  });
   return { status: response.status, json: (await response.json()) as Record<string, unknown> };
 };
 
@@ -370,6 +373,14 @@ describe('anti-abuse', () => {
     expect(blocked.json.error).toBe('rate_limited');
     const rows = db.raw.prepare('SELECT ip_hash FROM players').all() as { ip_hash: string }[];
     expect(rows.every((row) => row.ip_hash !== null && !row.ip_hash.includes('203'))).toBe(true);
+  });
+
+  it('does not limit account creation when DISABLE_PLAYER_LIMIT is "1" (staging and local dev)', async () => {
+    const ip = '203.0.113.60';
+    const env = { DISABLE_PLAYER_LIMIT: '1' };
+    for (let i = 0; i < MAX_NEW_PLAYERS_PER_IP + 3; i += 1) {
+      expect((await call('POST', '/api/player', { body: {}, ip, env })).status).toBe(201);
+    }
   });
 
   const submitWith = async (events: { t: number; key: string }[]) => {
